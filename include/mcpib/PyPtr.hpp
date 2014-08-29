@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2012, Jim Bosch
+ * Copyright (c) 2014, Jim Bosch
  * All rights reserved.
  *
  * mcpib is distributed under a simple BSD-like license;
