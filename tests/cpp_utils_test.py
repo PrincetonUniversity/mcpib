@@ -16,5 +16,8 @@ class CppUtilsTestCase(unittest.TestCase):
     def testPyPtr(self):
         self.assertTrue(cpp_utils_mod.testPyPtr())
 
+    def testTypeInfo(self):
+        self.assertTrue(cpp_utils_mod.testTypeInfo())
+
 if __name__ == "__main__":
     unittest.main()

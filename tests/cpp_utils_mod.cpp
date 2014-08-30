@@ -8,6 +8,7 @@
  */
 
 #include "mcpib/PyPtr.hpp"
+#include "mcpib/TypeInfo.hpp"
 
 namespace mcpib {
 
@@ -105,8 +106,20 @@ static ::PyObject * testPyPtr(::PyObject * self, ::PyObject *) {
     return PyObject_CallObject(func.get(), nullptr);
 }
 
+static ::PyObject * testTypeInfo(::PyObject * self, ::PyObject *) {
+
+    TypeInfo t1 = makeTypeInfo<PyPtr>();
+
+    if (t1.demangle() != "mcpib::PyPtr") {
+        Py_RETURN_FALSE;
+    }
+
+    Py_RETURN_TRUE;
+}
+
 static ::PyMethodDef methods[] = {
     "testPyPtr", testPyPtr, METH_NOARGS, "tests for the PyPtr class",
+    "testTypeInfo", testTypeInfo, METH_NOARGS, "tests for the TypeInfo class",
     {nullptr, nullptr, 0, nullptr}
 };
 
