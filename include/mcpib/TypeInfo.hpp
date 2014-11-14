@@ -70,6 +70,9 @@ struct TypeInfo {
     BaseID _base_type;
 };
 
+template <typename T>
+inline TypeInfo makeTypeInfo() { return TypeInfo(typeid(T)); }
+
 } // namespace mcpib
 
 #endif // !MCPIB_type_id_hpp_INCLUDED
