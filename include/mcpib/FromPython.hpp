@@ -10,12 +10,36 @@
 #define MCPIB_FromPython_hpp_INCLUDED
 
 #include "mcpib/PyPtr.hpp"
+#include "mcpib/TypeInfo.hpp"
 
 #include <memory>
 #include <vector>
 
 namespace mcpib {
 
+/*
+ * Base class for all from-Python converters.
+ *
+ * Derived classes of FromPythonConverter must be created via a free function or static member function
+ * that matches the signature of the FromPythonFactory typedef - that is, it takes a single PyPtr
+ * argument, and returns a unique_ptr<FromPythonConverter>.  The returned pointer should be null
+ * if no conversion is possible.  If a conversion is possible, the factory function should pass
+ * whatever information is necessary to complete the conversion (usually at least the PyPtr itself)
+ * to the derived converter's constructor.
+ *
+ * Derived class constructors must pass an integer penalty value to the base class constructor, which
+ * indicates how appropriate the converter is for the Python object we're attempting to convert.  A
+ * penalty of zero indicates a perfect match, with higher numbers indicating implicit conversions
+ * (including conversions from a Python object that holds a derived classes when looking for a base
+ * class reference or pointer; each level of inheritance should correspond to one unit of penalty).
+ * When converting types for overloaded functions, the maximum penalty value of all arguments is
+ * used to compare different overloads to detemrine which one will be called.
+ *
+ * All derived classes must implement convert() to actually carry out the conversion, and provide
+ * a non-trivial destructor if needed to clean up the pointer returned by convert().  A postcall()
+ * method may also be provided, and will be called after the function that used the converter is
+ * called.
+ */
 class FromPythonConverter {
 public:
 
@@ -34,6 +58,49 @@ public:
 typedef std::unique_ptr<FromPythonConverter> (*FromPythonFactory)(PyPtr const &);
 
 typedef std::vector<std::unique_ptr<FromPythonConverter>> ConverterVector;
+
+
+template <typename T>
+class AdaptFromPython {
+public:
+    static TypeInfo getTypeInfo() { return makeTypeInfo<T>(); }
+    static T adapt(void * converted) { return *reinterpret_cast<T*>(converted); }
+};
+
+template <typename U>
+class AdaptFromPython<U const> {
+public:
+    static TypeInfo getTypeInfo() { return makeTypeInfo<U>(); }
+    static U const adapt(void * converted) { return *reinterpret_cast<U const *>(converted); }
+};
+
+template <typename U>
+class AdaptFromPython<U *> {
+public:
+    static TypeInfo getTypeInfo() { return makeTypeInfo<U>(); }
+    static U * adapt(void * converted) { return reinterpret_cast<U *>(converted); }
+};
+
+template <typename U>
+class AdaptFromPython<U &> {
+public:
+    static TypeInfo getTypeInfo() { return makeTypeInfo<U>(); }
+    static U & adapt(void * converted) { return *reinterpret_cast<U *>(converted); }
+};
+
+template <typename U>
+class AdaptFromPython<U const *> {
+public:
+    static TypeInfo getTypeInfo() { return makeTypeInfo<U>(); }
+    static U const * adapt(void * converted) { return reinterpret_cast<U const *>(converted); }
+};
+
+template <typename U>
+class AdaptFromPython<U const &> {
+public:
+    static TypeInfo getTypeInfo() { return makeTypeInfo<U>(); }
+    static U const & adapt(void * converted) { return *reinterpret_cast<U const *>(converted); }
+};
 
 } // namespace mcpib
 

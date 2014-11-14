@@ -25,7 +25,7 @@ public:
 };
 
 /*
- *  The Generate class defines a Sequence of integers, from zero to one minus its template argument;
+ *  The Generate class defines a Sequence of integers, from zero to one less than its template argument;
  *  that is,
  *
  *  Generate<2>::Type -> Sequence<0,1>
@@ -35,6 +35,11 @@ template<int ...> struct Sequence {};
 template<int N, int ...S> struct Generate : Generate<N-1, N-1, S...> {};
 template<int ...S> struct Generate<0, S...>{ typedef Sequence<S...> Type; };
 
+
+/*
+ * A traits class to extract the type of the Nth argument of a function, as defined by
+ * the template parameter F as in e.g. std::function<F>.
+ */
 template <int N, typename F> struct ArgumentTraits;
 
 template <int N, typename Result, typename ...Args>
@@ -42,12 +47,13 @@ struct ArgumentTraits<N,Result(Args...)> {
     typedef typename std::tuple_element<N,std::tuple<Args...>>::type Type;
 };
 
+
 template <int N, typename F>
 typename ArgumentTraits<N,F>::Type convertArg(
     std::function<F> const & function,
     ConverterVector & converters
 ) {
-    return reinterpret_cast<typename ArgumentTraits<N,F>::Type *>(converters[N]->convert());;
+    return AdaptFromPython<typename ArgumentTraits<N,F>::Type>(converters[N]->convert());
 }
 
 class CallableOverloadBase {
