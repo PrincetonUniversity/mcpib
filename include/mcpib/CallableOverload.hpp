@@ -11,6 +11,7 @@
 
 #include "mcpib/FromPython.hpp"
 #include "mcpib/TypeRegistration.hpp"
+#include "mcpib/metaprogramming.hpp"
 
 #include <string>
 #include <memory>
@@ -24,53 +25,67 @@ public:
     std::shared_ptr<TypeRegistration> registration;
 };
 
-/*
- *  The Generate class defines a Sequence of integers, from zero to one less than its template argument;
- *  that is,
- *
- *  Generate<2>::Type -> Sequence<0,1>
- *  Generate<3>::Type -> Sequence<0,1,2>
- */
-template<int ...> struct Sequence {};
-template<int N, int ...S> struct Generate : Generate<N-1, N-1, S...> {};
-template<int ...S> struct Generate<0, S...>{ typedef Sequence<S...> Type; };
+typedef std::vector<ArgumentData> ArgumentDataVector;
 
+struct ArgumentConverter {
 
-/*
- * A traits class to extract the type of the Nth argument of a function, as defined by
- * the template parameter F as in e.g. std::function<F>.
- */
-template <int N, typename F> struct ArgumentTraits;
+    explicit ArgumentConverter(ConverterVector const & converters) : _converters(converters) {}
 
-template <int N, typename Result, typename ...Args>
-struct ArgumentTraits<N,Result(Args...)> {
-    typedef typename std::tuple_element<N,std::tuple<Args...>>::type Type;
+    template <int N, typename T>
+    T apply() const {
+        return AdaptFromPython<T>::adapt(_converters[N]->convert());
+    }
+
+private:
+    ConverterVector const & _converters;
 };
 
 
-template <int N, typename F>
-typename ArgumentTraits<N,F>::Type convertArg(
-    std::function<F> const & function,
-    ConverterVector & converters
-) {
-    return AdaptFromPython<typename ArgumentTraits<N,F>::Type>(converters[N]->convert());
-}
+class CallableOverloadBase;
+
+
+class CallableOverloadData {
+public:
+
+    enum ErrorEnum {
+        SUCCESS = 0,
+        TOO_MANY,
+        NO_CONVERTER
+    };
+
+    CallableOverloadData(PyPtr const & args, PyPtr const & kwds, CallableOverloadBase const * overload);
+
+    int getPenalty() const;
+
+    PyPtr call() const;
+
+private:
+    ErrorEnum _error_state;
+    int _error_position;
+    std::string _error_string;
+    ConverterVector _converters;
+    CallableOverloadBase const * _overload;
+};
+
 
 class CallableOverloadBase {
 public:
 
-    explicit CallableOverloadBase(std::vector<ArgumentData> arguments) : _arguments(std::move(arguments)) {}
+    explicit CallableOverloadBase(ArgumentDataVector arguments) : _arguments(std::move(arguments)) {}
 
-    PyPtr call(PyPtr const & args, PyPtr const & kwds) const;
+    bool prep(PyPtr const & args, PyPtr const & kwds, ConverterVector & converters) const;
+
+    virtual PyPtr call(ConverterVector const & converters) const = 0;
 
     virtual ~CallableOverloadBase() {}
 
 protected:
 
-    virtual PyPtr _call(ConverterVector converters) const = 0;
+    friend class CallableOverloadData;
 
-    std::vector<ArgumentData> _arguments;
+    ArgumentDataVector _arguments;
 };
+
 
 template <typename Result, typename ...Args>
 class CallableOverload : public CallableOverloadBase {
@@ -81,18 +96,13 @@ public:
         _function(std::move(function))
     {}
 
-protected:
-
-    template <int ...S>
-    PyPtr _callImpl(ConverterVector converters, Sequence<S...>) const {
-        _function(convertArg<S>(_function, converters)...);
+    virtual PyPtr call(ConverterVector const & converters) const {
+        callFunction(ArgumentConverter(converters), _function);
         // TODO: handle return value
         return PyPtr::borrow(Py_None);
     }
 
-    virtual PyPtr _call(ConverterVector converters) const {
-        _callImpl(std::move(converters), typename Generate<sizeof...(Args)>::Type());
-    }
+protected:
 
 private:
     std::function<Result(Args...)> _function;

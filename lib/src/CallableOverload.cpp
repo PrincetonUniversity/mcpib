@@ -13,25 +13,49 @@
 
 namespace mcpib {
 
-PyPtr CallableOverloadBase::call(PyPtr const & args, PyPtr const & kwds) const {
-    if (!PyTuple_Check(args.get())) {
-        // TODO: better exception message
-        PyErr_SetString(PyExc_TypeError, "positional arguments must be a tuple");
-        return PyPtr();
+CallableOverloadData::CallableOverloadData(
+    PyPtr const & args, PyPtr const & kwds,
+    CallableOverloadBase const * overload
+) :
+    _error_state(SUCCESS),
+    _error_position(0),
+    _error_string(),
+    _converters(PyTuple_Size(args.get())),
+    _overload(overload)
+{
+    if (_converters.size() > _overload->_arguments.size()) {
+        _error_state = TOO_MANY;
+        return;
     }
-    Py_ssize_t const size = PyTuple_Size(args.get());
-    if (static_cast<std::size_t>(size) != _arguments.size()) {
-        // TODO: better exception message
-        PyErr_SetString(PyExc_TypeError, "incorrect number of arguments");
-    }
-    ConverterVector converters(size);
+    Py_ssize_t size = _converters.size();
     for (Py_ssize_t index = 0; index < size; ++index) {
-        // TODO: keyword arguments
         PyPtr python_arg = PyPtr::borrow(PyTuple_GET_ITEM(args.get(), index));
-        ArgumentData const & arg_data = _arguments[index];
-        converters[index] = arg_data.registration->lookupFromPython(python_arg, arg_data.is_lvalue);
+        ArgumentData const & arg_data = _overload->_arguments[index];
+        _converters[index] = arg_data.registration->lookupFromPython(python_arg, arg_data.is_lvalue);
+        if (!_converters[index]) {
+            _error_state = NO_CONVERTER;
+            _error_position = index;
+            return;
+        }
     }
-    return _call(std::move(converters));
+
+    // TODO: handle keyword arguments
+}
+
+int CallableOverloadData::getPenalty() const {
+    int penalty = 0;
+    for (auto iter = _converters.begin(); iter != _converters.end(); ++iter) {
+        penalty = std::max((**iter).penalty, penalty);
+    }
+    return penalty;
+}
+
+PyPtr CallableOverloadData::call() const {
+    PyPtr p = _overload->call(_converters);
+    for (auto iter = _converters.begin(); iter != _converters.end(); ++iter) {
+        (**iter).postcall();
+    }
+    return p;
 }
 
 } // namespace mcpib
