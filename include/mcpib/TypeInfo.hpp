@@ -75,4 +75,18 @@ inline TypeInfo makeTypeInfo() { return TypeInfo(typeid(T)); }
 
 } // namespace mcpib
 
+namespace std {
+
+template <>
+struct hash<mcpib::TypeInfo> {
+    typedef mcpib::TypeInfo argument_type;
+    typedef std::size_t result_type;
+
+    result_type operator()(argument_type const & t) const {
+        return hash<std::string>()(t.name());
+    }
+};
+
+} // namespace std
+
 #endif // !MCPIB_type_id_hpp_INCLUDED
