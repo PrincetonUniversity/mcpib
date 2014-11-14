@@ -13,7 +13,7 @@
 #include "mcpib/TypeInfo.hpp"
 
 #include <vector>
-#include <map>
+#include <unordered_map>
 
 namespace mcpib {
 
@@ -21,7 +21,7 @@ class TypeRegistration {
 public:
 
     typedef std::vector<std::pair<FromPythonFactory,bool>> FromPythonList;
-    typedef std::map<TypeInfo,std::shared_ptr<TypeRegistration>> Map;
+    typedef std::unordered_map<TypeInfo,std::shared_ptr<TypeRegistration>> Map;
 
     /*
      * Add a new from-Python converter for this type.
