@@ -18,14 +18,34 @@
 
 namespace mcpib {
 
-class ArgumentData {
-public:
+struct ArgumentData {
+
+    explicit ArgumentData(std::string const & name_) : name(name_) {}
+
     bool is_lvalue;
     std::string name;
     std::shared_ptr<TypeRegistration> registration;
 };
 
 typedef std::vector<ArgumentData> ArgumentDataVector;
+
+
+class ArgumentDataBuilder {
+public:
+
+    explicit ArgumentDataBuilder(TypeRegistry & registry, std::initializer_list<std::string> names);
+
+    template <int N, typename T>
+    void apply() const {
+        arguments[N].is_lvalue = AdaptFromPython<T>::is_lvalue;
+        arguments[N].registration = _registry->require(makeTypeInfo<T>());
+    }
+
+    mutable ArgumentDataVector arguments;
+private:
+    TypeRegistry * _registry;
+};
+
 
 struct ArgumentConverter {
 
@@ -91,7 +111,7 @@ template <typename Result, typename ...Args>
 class CallableOverload : public CallableOverloadBase {
 public:
 
-    explicit CallableOverload(std::function<Result(Args...)> function, std::vector<ArgumentData> arguments) :
+    explicit CallableOverload(std::function<Result(Args...)> function, ArgumentDataVector arguments) :
         CallableOverloadBase(std::move(arguments)),
         _function(std::move(function))
     {}
@@ -107,6 +127,20 @@ protected:
 private:
     std::function<Result(Args...)> _function;
 };
+
+
+template <typename Result, typename ...Args>
+std::unique_ptr<CallableOverloadBase> makeCallableOverload(
+    std::function<Result(Args...)> function,
+    std::initializer_list<std::string> names,
+    TypeRegistry & registry
+) {
+    ArgumentDataBuilder builder(registry, std::move(names));
+    ForEach<Args...>::apply(builder);
+    return std::unique_ptr<CallableOverloadBase>(
+        new CallableOverload<Result,Args...>(function, std::move(builder.arguments))
+    );
+}
 
 } // namespace mcpib
 

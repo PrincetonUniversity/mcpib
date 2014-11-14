@@ -63,6 +63,7 @@ typedef std::vector<std::unique_ptr<FromPythonConverter>> ConverterVector;
 template <typename T>
 class AdaptFromPython {
 public:
+    static bool const is_lvalue = false;
     static TypeInfo getTypeInfo() { return makeTypeInfo<T>(); }
     static T adapt(void * converted) { return *reinterpret_cast<T*>(converted); }
 };
@@ -70,6 +71,7 @@ public:
 template <typename U>
 class AdaptFromPython<U const> {
 public:
+    static bool const is_lvalue = false;
     static TypeInfo getTypeInfo() { return makeTypeInfo<U>(); }
     static U const adapt(void * converted) { return *reinterpret_cast<U const *>(converted); }
 };
@@ -77,6 +79,7 @@ public:
 template <typename U>
 class AdaptFromPython<U *> {
 public:
+    static bool const is_lvalue = true;
     static TypeInfo getTypeInfo() { return makeTypeInfo<U>(); }
     static U * adapt(void * converted) { return reinterpret_cast<U *>(converted); }
 };
@@ -84,6 +87,7 @@ public:
 template <typename U>
 class AdaptFromPython<U &> {
 public:
+    static bool const is_lvalue = true;
     static TypeInfo getTypeInfo() { return makeTypeInfo<U>(); }
     static U & adapt(void * converted) { return *reinterpret_cast<U *>(converted); }
 };
@@ -91,6 +95,7 @@ public:
 template <typename U>
 class AdaptFromPython<U const *> {
 public:
+    static bool const is_lvalue = false;
     static TypeInfo getTypeInfo() { return makeTypeInfo<U>(); }
     static U const * adapt(void * converted) { return reinterpret_cast<U const *>(converted); }
 };
@@ -98,6 +103,7 @@ public:
 template <typename U>
 class AdaptFromPython<U const &> {
 public:
+    static bool const is_lvalue = false;
     static TypeInfo getTypeInfo() { return makeTypeInfo<U>(); }
     static U const & adapt(void * converted) { return *reinterpret_cast<U const *>(converted); }
 };

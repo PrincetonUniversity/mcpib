@@ -13,6 +13,16 @@
 
 namespace mcpib {
 
+ArgumentDataBuilder::ArgumentDataBuilder(TypeRegistry & registry, std::initializer_list<std::string> names) :
+    arguments(),
+    _registry(&registry)
+{
+    arguments.reserve(names.size());
+    for (auto iter = names.begin(); iter != names.end(); ++iter) {
+        arguments.emplace_back(*iter);
+    }
+}
+
 CallableOverloadData::CallableOverloadData(
     PyPtr const & args, PyPtr const & kwds,
     CallableOverloadBase const * overload
