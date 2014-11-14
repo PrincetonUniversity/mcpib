@@ -9,11 +9,10 @@
 #ifndef MCPIB_metaprogramming_hpp_INCLUDED
 #define MCPIB_metaprogramming_hpp_INCLUDED
 
-#include "mcpib/FromPython.hpp"
-#include "mcpib/TypeRegistration.hpp"
+#include "mcpib/PyPtr.hpp"  // only needed because Python #include needs to come before std library
 
-#include <string>
-#include <memory>
+#include <tuple>
+#include <functional>
 
 namespace mcpib {
 
@@ -49,6 +48,35 @@ callFunctionImpl(ArgumentBuilder builder, std::function<F> const & function, Seq
     return function(builder.template apply<S,typename ArgumentTraits<S,F>::Type>()...);
 }
 
+
+template <typename Func, typename ...E1>
+struct ForEachHelper {
+
+    void apply() {
+        _apply1<0,E1...>();
+    }
+
+    ForEachHelper(Func const & f) : _f(f) {}
+
+private:
+
+    template <int>
+    void _apply1() {}
+
+    template <int, typename T, typename ...E2>
+    void _apply1() {
+        _apply1<0,E2...>();
+        _apply2<sizeof...(E2)>();
+    }
+
+    template <std::size_t N>
+    void _apply2() {
+        _f.template apply<N,typename std::tuple_element<N,std::tuple<E1...>>::type>();
+    }
+
+    Func const & _f;
+};
+
 } // namespace detail
 
 
@@ -70,6 +98,15 @@ Result callFunction(ArgumentBuilder builder, std::function<Result(Args...)> cons
     return detail::callFunctionImpl(builder, function, typename detail::Generate<sizeof...(Args)>::Type());
 }
 
+template <typename ...E>
+struct ForEach {
+
+    template <typename Func>
+    static void apply(Func const & f) {
+        detail::ForEachHelper<Func,E...>(f).apply();
+    }
+
+};
 
 } // namespace mcpib
 
