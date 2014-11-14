@@ -29,4 +29,21 @@ std::unique_ptr<FromPythonConverter> TypeRegistration::lookupFromPython(
     return converter;
 }
 
+std::shared_ptr<TypeRegistration> TypeRegistry::lookup(TypeInfo const & t) const {
+    auto iter = _map.find(t);
+    if (iter == _map.end()) {
+        return std::shared_ptr<TypeRegistration>();
+    }
+    return iter->second;
+}
+
+std::shared_ptr<TypeRegistration> TypeRegistry::require(TypeInfo const & t) {
+    std::shared_ptr<TypeRegistration> & element = _map[t];
+    if (!element) {
+        element = std::make_shared<TypeRegistration>();
+    }
+    return element;
+}
+
+
 } // mcpib

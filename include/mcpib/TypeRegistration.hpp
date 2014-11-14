@@ -57,6 +57,24 @@ private:
     Map _derived;
 };
 
+
+class TypeRegistry {
+public:
+
+    /*
+     * Find the registration for the given type, returning a null pointer if not found.
+     */
+    std::shared_ptr<TypeRegistration> lookup(TypeInfo const & t) const;
+
+    /*
+     * Find the registration for the given type, inserting a new one if not found.
+     */
+    std::shared_ptr<TypeRegistration> require(TypeInfo const & t);
+
+private:
+    TypeRegistration::Map _map;
+};
+
 } // namespace mcpib
 
 #endif // !MCPIB_TypeRegistration_hpp_INCLUDED
