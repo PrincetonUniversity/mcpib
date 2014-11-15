@@ -75,7 +75,7 @@ public:
 
     CallableOverloadData(PyPtr const & args, PyPtr const & kwds, CallableOverloadBase const * overload);
 
-    int getPenalty() const;
+    Penalty getPenalty() const;
 
     PyPtr call() const;
 

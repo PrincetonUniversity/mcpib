@@ -17,6 +17,8 @@
 
 namespace mcpib {
 
+typedef unsigned int Penalty;
+
 /*
  * Base class for all from-Python converters.
  *
@@ -43,9 +45,9 @@ namespace mcpib {
 class FromPythonConverter {
 public:
 
-    explicit FromPythonConverter(int penalty_) : penalty(penalty_) {}
+    explicit FromPythonConverter(Penalty penalty_) : penalty(penalty_) {}
 
-    int const penalty;
+    Penalty const penalty;
 
     virtual void * convert() = 0;
 

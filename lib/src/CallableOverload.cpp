@@ -52,8 +52,8 @@ CallableOverloadData::CallableOverloadData(
     // TODO: handle keyword arguments
 }
 
-int CallableOverloadData::getPenalty() const {
-    int penalty = 0;
+Penalty CallableOverloadData::getPenalty() const {
+    Penalty penalty = 0;
     for (auto iter = _converters.begin(); iter != _converters.end(); ++iter) {
         penalty = std::max((**iter).penalty, penalty);
     }
