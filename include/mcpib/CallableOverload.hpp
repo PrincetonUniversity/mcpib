@@ -95,13 +95,13 @@ public:
 
     explicit CallableOverloadBase(ArgumentDataVector arguments) : _arguments(std::move(arguments)) {}
 
-    virtual PyPtr call(ConverterVector const & converters) const = 0;
-
     virtual ~CallableOverloadBase() {}
 
 protected:
 
     friend class CallableOverloadData;
+
+    virtual PyPtr call(ConverterVector const & converters) const = 0;
 
     ArgumentDataVector _arguments;
 };
@@ -116,13 +116,13 @@ public:
         _function(std::move(function))
     {}
 
+protected:
+
     virtual PyPtr call(ConverterVector const & converters) const {
         callFunction(ArgumentConverter(converters), _function);
         // TODO: handle return value
         return PyPtr::borrow(Py_None);
     }
-
-protected:
 
 private:
     std::function<Result(Args...)> _function;
