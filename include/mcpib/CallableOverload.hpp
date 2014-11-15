@@ -75,13 +75,15 @@ public:
 
     CallableOverloadData(PyPtr const & args, PyPtr const & kwds, CallableOverloadBase const * overload);
 
+    ErrorEnum getState() const { return _error_state; }
+
     Penalty getPenalty() const;
 
     PyPtr call() const;
 
 private:
     ErrorEnum _error_state;
-    int _error_position;
+    std::size_t _error_position;
     std::string _error_string;
     ConverterVector _converters;
     CallableOverloadBase const * _overload;
