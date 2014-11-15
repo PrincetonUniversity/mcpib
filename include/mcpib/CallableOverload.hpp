@@ -95,8 +95,6 @@ public:
 
     explicit CallableOverloadBase(ArgumentDataVector arguments) : _arguments(std::move(arguments)) {}
 
-    bool prep(PyPtr const & args, PyPtr const & kwds, ConverterVector & converters) const;
-
     virtual PyPtr call(ConverterVector const & converters) const = 0;
 
     virtual ~CallableOverloadBase() {}
