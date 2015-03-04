@@ -22,7 +22,7 @@ public:
         std::initializer_list<std::string> names,
         TypeRegistry & registry
     ) {
-        _overloads.push_back(makeCallableOverload(function, names, registry));
+        _overloads.push_back(makeCallableOverload(std::move(function), std::move(names), registry));
     }
 
     PyPtr call(PyPtr const & args, PyPtr const & kwds) const;

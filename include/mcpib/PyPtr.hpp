@@ -19,14 +19,23 @@ public:
 
     typedef ::PyObject element_type;
 
-    PyPtr() : _p(nullptr) {}
+    constexpr PyPtr() : _p(nullptr) {}
+
+    constexpr PyPtr(std::nullptr_t) : _p(nullptr) {}
 
     PyPtr(PyPtr const & other) : _p(other._p) { Py_XINCREF(_p); }
+
+    PyPtr(PyPtr && other) : _p(other._p) { other._p = nullptr; }
 
     ~PyPtr() { Py_XDECREF(_p); }
 
     PyPtr & operator=(PyPtr const & other) {
         reset(other._p);
+        return *this;
+    }
+
+    PyPtr & operator=(PyPtr && other) {
+        PyPtr(std::move(other)).swap(*this);
         return *this;
     }
 

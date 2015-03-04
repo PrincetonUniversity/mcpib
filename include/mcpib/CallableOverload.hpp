@@ -20,7 +20,7 @@ namespace mcpib {
 
 struct ArgumentData {
 
-    explicit ArgumentData(std::string const & name_) : name(name_) {}
+    explicit ArgumentData(std::string name_) : name(std::move(name_)) {}
 
     bool is_lvalue;
     std::string name;
@@ -138,7 +138,7 @@ std::unique_ptr<CallableOverloadBase> makeCallableOverload(
     ArgumentDataBuilder builder(registry, std::move(names));
     ForEach<Args...>::apply(builder);
     return std::unique_ptr<CallableOverloadBase>(
-        new CallableOverload<Result,Args...>(function, std::move(builder.arguments))
+        new CallableOverload<Result,Args...>(std::move(function), std::move(builder.arguments))
     );
 }
 
