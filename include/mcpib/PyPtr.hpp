@@ -30,7 +30,7 @@ public:
     ~PyPtr() { Py_XDECREF(_p); }
 
     PyPtr & operator=(PyPtr const & other) {
-        reset(other._p);
+        PyPtr(other).swap(*this);
         return *this;
     }
 
@@ -40,14 +40,6 @@ public:
     }
 
     explicit operator bool() const { return _p; }
-
-    void reset(element_type * p=nullptr) {
-        if (p != _p) {
-            Py_XDECREF(_p);
-            _p = p;
-            Py_XINCREF(_p);
-        }
-    }
 
     void swap(PyPtr & other) {
         std::swap(_p, other._p);
