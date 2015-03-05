@@ -6,4 +6,5 @@ add_library(mcpib SHARED
   src/PythonException.cpp
   src/TypeInfo.cpp
   src/TypeRegistration.cpp
+  src/WrapperError.cpp
   )
