@@ -8,7 +8,7 @@
  */
 
 #include "mcpib/Callable.hpp"
-#include "mcpib/PythonException.hpp"
+#include "mcpib/WrapperError.hpp"
 
 #include <limits>
 
@@ -38,13 +38,9 @@ PyPtr Callable::call(PyPtr const & args, PyPtr const & kwds) const {
     } catch (PythonException & err) {
         return err.restore();
     } catch (std::exception & err) {
-        std::string message("Unexpected C++ exception: ");
-        message += std::string(err.what());
-        PyErr_SetString(PyExc_SystemError, message.c_str());
-        return nullptr;
+        return raiseUnknownCppException(err.what()).restore();
     } catch (...) {
-        PyErr_SetString(PyExc_SystemError, "Unexpected non-exception C++ throw.");
-        return nullptr;
+        return raiseUnknownCppException("Unexpected non-exception C++ throw.").restore();
     }
 }
 
