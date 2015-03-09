@@ -16,19 +16,32 @@ namespace mcpib {
 class Callable {
 public:
 
+    /*
+     * Construct a new empty Callable.
+     */
+    explicit Callable(std::string name);
+
+    /*
+     * Construct from an existing Python Callable object.
+     */
+    explicit Callable(PyPtr const & py);
+
     template <typename Result, typename ...Args>
     void addOverload(
         std::function<Result(Args...)> function,
         std::initializer_list<std::string> names,
         TypeRegistry & registry
     ) {
-        _overloads.push_back(makeCallableOverload(std::move(function), std::move(names), registry));
+        _addOverload(makeCallableOverload(std::move(function), std::move(names), registry));
     }
 
     PyPtr call(PyPtr const & args, PyPtr const & kwds) const;
 
 private:
-    std::vector<std::unique_ptr<CallableOverloadBase>> _overloads;
+
+    void _addOverload(std::unique_ptr<CallableOverloadBase> && overload);
+
+    PyPtr _py;
 };
 
 } // namespace mcpib

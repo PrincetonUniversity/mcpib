@@ -7,7 +7,7 @@
  * of the source distribution.
  */
 
-#include "mcpib/WrapperError.hpp"
+#include "mcpib/internal/initializers.hpp"
 
 static PyMethodDef methods[] = {
     {nullptr, nullptr, 0, nullptr}
@@ -16,5 +16,7 @@ static PyMethodDef methods[] = {
 PyMODINIT_FUNC
 init_mcpib(void) {
     PyObject * m = Py_InitModule("_mcpib", methods);
-    mcpib::declareWrapperErrors(mcpib::PyPtr::borrow(m));
+    auto module = mcpib::PyPtr::borrow(m);
+    mcpib::internal::declareWrapperErrors(module);
+    mcpib::internal::declareCallableType(module);
 }

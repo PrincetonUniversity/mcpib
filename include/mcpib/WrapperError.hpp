@@ -16,8 +16,6 @@ namespace mcpib {
 PythonException raiseWrapperError(std::string message);
 PythonException raiseUnknownCppException(std::string message);
 
-void declareWrapperErrors(PyPtr const & module);
-
 } // namespace mcpib
 
 #endif // !MCPIB_WrapperError_hpp_INCLUDED

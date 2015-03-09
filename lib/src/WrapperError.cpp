@@ -8,6 +8,7 @@
  */
 
 #include "mcpib/WrapperError.hpp"
+#include "mcpib/internal/initializers.hpp"
 
 namespace mcpib {
 
@@ -33,13 +34,7 @@ void addException(
 
 } // anonymous
 
-PythonException raiseWrapperError(std::string message) {
-    return PythonException::raise(PyPtr::borrow(WrapperError), std::move(message));
-}
-
-PythonException raiseUnknownCppException(std::string message) {
-    return PythonException::raise(PyPtr::borrow(UnknownCppException), std::move(message));
-}
+namespace internal {
 
 void declareWrapperErrors(PyPtr const & module) {
     addException(module, WrapperError, "mcpib.WrapperError",
@@ -48,5 +43,16 @@ void declareWrapperErrors(PyPtr const & module) {
                  "Exception raised in Python when an unrecognized C++ exception is caught in C++.",
                  WrapperError);
 }
+
+} // namespace internal
+
+PythonException raiseWrapperError(std::string message) {
+    return PythonException::raise(PyPtr::borrow(WrapperError), std::move(message));
+}
+
+PythonException raiseUnknownCppException(std::string message) {
+    return PythonException::raise(PyPtr::borrow(UnknownCppException), std::move(message));
+}
+
 
 } // namespace mcpib
