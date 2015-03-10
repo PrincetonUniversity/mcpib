@@ -2,6 +2,7 @@ add_library(mcpib SHARED
   src/builtin/numeric.cpp
   src/Callable.cpp
   src/CallableOverload.cpp
+  src/Module.cpp
   src/PyPtr.cpp
   src/PythonException.cpp
   src/TypeInfo.cpp
