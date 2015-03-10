@@ -17,6 +17,8 @@ void declareWrapperErrors(PyPtr const & module);
 
 void declareCallableType(PyPtr const & module);
 
+void declareTypeRegistryType(PyPtr const & module);
+
 }} // namespace mcpib::internal
 
 #endif // !MCPIB_INTERNAL_initializers_hpp_INCLUDED

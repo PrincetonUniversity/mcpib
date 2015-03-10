@@ -9,7 +9,7 @@
 #ifndef MCPIB_numeric_hpp_INCLUDED
 #define MCPIB_numeric_hpp_INCLUDED
 
-#include "mcpib/TypeRegistration.hpp"
+#include "mcpib/TypeRegistry.hpp"
 
 namespace mcpib { namespace builtin {
 

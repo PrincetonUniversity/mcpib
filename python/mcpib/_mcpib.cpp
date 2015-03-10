@@ -19,4 +19,5 @@ init_mcpib(void) {
     auto module = mcpib::PyPtr::borrow(m);
     mcpib::internal::declareWrapperErrors(module);
     mcpib::internal::declareCallableType(module);
+    mcpib::internal::declareTypeRegistryType(module);
 }
