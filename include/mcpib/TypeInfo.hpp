@@ -14,6 +14,7 @@
 #include <typeinfo>
 #include <cstring>
 #include <string>
+#include <iosfwd>
 
 namespace mcpib {
 
@@ -72,6 +73,8 @@ struct TypeInfo {
 
 template <typename T>
 inline TypeInfo makeTypeInfo() { return TypeInfo(typeid(T)); }
+
+std::ostream & operator<<(std::ostream & os, TypeInfo const & t);
 
 } // namespace mcpib
 

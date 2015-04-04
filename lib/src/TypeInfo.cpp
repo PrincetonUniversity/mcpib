@@ -9,6 +9,8 @@
 
 #include "mcpib/TypeInfo.hpp"
 
+#include <iostream>
+
 #if __GNUC__
 #include <cxxabi.h>
 #define MCPIB_GCC_DEMANGLE
@@ -37,5 +39,9 @@ std::string TypeInfo::demangle() const {
 std::string TypeInfo::demangle() const { return name(); }
 
 #endif
+
+std::ostream & operator<<(std::ostream & os, TypeInfo const & t) {
+    return os << t.demangle();
+}
 
 } // namespace mcpib
