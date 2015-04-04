@@ -58,9 +58,15 @@ public:
 
     element_type * get() const { return _p; }
 
-    element_type * operator->() const { return _p; }
+    element_type * operator->() const {
+        assert(_p);
+        return _p;
+    }
 
-    element_type & operator*() const { return *_p; }
+    element_type & operator*() const {
+        assert(_p);
+        return *_p;
+    }
 
     PyPtr getattr(char const * name, PyPtr default_=PyPtr()) const;
 
