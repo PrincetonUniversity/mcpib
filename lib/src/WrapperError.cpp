@@ -16,6 +16,9 @@ namespace {
 
 static PyObject * WrapperError = nullptr;
 static PyObject * UnknownCppException = nullptr;
+static PyObject * SignatureError = nullptr;
+static PyObject * FromPythonError = nullptr;
+static PyObject * AmbiguousOverloadError = nullptr;
 
 void addException(
     PyPtr const & module, PyObject * & type,
@@ -42,6 +45,15 @@ void declareWrapperErrors(PyPtr const & module) {
     addException(module, UnknownCppException, "mcpib.UnknownCppException",
                  "Exception raised in Python when an unrecognized C++ exception is caught in C++.",
                  WrapperError);
+    addException(module, SignatureError, "mcpib.SignatureError",
+                 "Base class for exceptions raised when Python arguments do not match a C++ signature",
+                 PyPtr::steal(PyTuple_Pack(2, WrapperError, PyExc_TypeError)).get());
+    addException(module, FromPythonError, "mcpib.FromPythonError",
+                 "Exception raised when a Python object cannot be converted to the required C++ type",
+                 SignatureError);
+    addException(module, AmbiguousOverloadError, "mcpib.AmbiguousOverloadError",
+                 "Exception raised when there is no single C++ overload that best matches the Python types",
+                 SignatureError);
 }
 
 } // namespace internal
@@ -54,5 +66,16 @@ PythonException raiseUnknownCppException(std::string message) {
     return PythonException::raise(PyPtr::borrow(UnknownCppException), std::move(message));
 }
 
+PythonException raiseSignatureError(std::string message) {
+    return PythonException::raise(PyPtr::borrow(SignatureError), std::move(message));
+}
+
+PythonException raiseFromPythonError(std::string message) {
+    return PythonException::raise(PyPtr::borrow(FromPythonError), std::move(message));
+}
+
+PythonException raiseAmbiguousOverloadError(std::string message) {
+    return PythonException::raise(PyPtr::borrow(AmbiguousOverloadError), std::move(message));
+}
 
 } // namespace mcpib

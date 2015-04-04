@@ -24,6 +24,10 @@ class ExceptionsTestCase(unittest.TestCase):
         """
         self.assertTrue(issubclass(mcpib.WrapperError, Exception))
         self.assertTrue(issubclass(mcpib.UnknownCppException, mcpib.WrapperError))
+        self.assertTrue(issubclass(mcpib.SignatureError, mcpib.WrapperError))
+        self.assertTrue(issubclass(mcpib.SignatureError, TypeError))
+        self.assertTrue(issubclass(mcpib.FromPythonError, mcpib.SignatureError))
+        self.assertTrue(issubclass(mcpib.AmbiguousOverloadError, mcpib.SignatureError))
 
 if __name__ == "__main__":
     unittest.main()
