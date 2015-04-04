@@ -8,6 +8,8 @@
  */
 
 #include "mcpib/CallableOverload.hpp"
+#include "mcpib/WrapperError.hpp"
+#include "mcpib/internal/format.h"
 
 #include <string>
 
@@ -28,7 +30,7 @@ CallableOverloadData::CallableOverloadData(
     CallableOverloadBase const * overload
 ) :
     _error_state(SUCCESS),
-    _error_position(0),
+    _error_position(-1),
     _error_string(),
     _converters(PyTuple_Size(args.get())),
     _overload(overload)
@@ -48,8 +50,27 @@ CallableOverloadData::CallableOverloadData(
             return;
         }
     }
-
     // TODO: handle keyword arguments
+}
+
+PyPtr CallableOverloadData::raiseException(std::string const & function_name) const {
+    if (_error_state == TOO_MANY) {
+        return raiseSignatureError(
+            fmt::format("Too many arguments ({}) to function '{}' (expects at most {})",
+                        _converters.size(), function_name, _overload->_arguments.size())
+        ).restore();
+    } else if (_error_state == NO_CONVERTER) {
+        ArgumentData const & arg_data = _overload->_arguments[_error_position];
+        // TODO: include C++ type information and Python object.
+        return raiseFromPythonError(
+            fmt::format("No converter found for argument '{}' to function '{}'",
+                        arg_data.name, function_name)
+        ).restore();
+    }
+    // TODO: handle keyword arguments
+    return raiseFromPythonError(
+        fmt::format("Cannot convert arguments to '{}'", function_name)
+    ).restore();
 }
 
 Penalty CallableOverloadData::getPenalty() const {

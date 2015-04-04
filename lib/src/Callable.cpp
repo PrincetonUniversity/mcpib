@@ -93,25 +93,41 @@ PyCallable::PyCallable(std::string name_) : name(std::move(name_)) {
 
 PyPtr PyCallable::call(PyPtr const & args, PyPtr const & kwds) const {
     try {
-        std::vector<CallableOverloadData> data;
-        data.reserve(overloads.size());
-        std::size_t best_index = -1;
-        Penalty best_penalty = std::numeric_limits<unsigned int>::max();
-        for (std::size_t i = 0; i < overloads.size(); ++i) {
-            data.emplace_back(args, kwds, overloads[i].get());
-            if (data[i].getState() == CallableOverloadData::SUCCESS) {
-                Penalty new_penalty = data[i].getPenalty();
-                if (new_penalty < best_penalty) {
-                    best_index = i;
-                    best_penalty = new_penalty;
-                    if (best_penalty == 0) break;
+        if (overloads.empty()) {
+            return raiseWrapperError("Callable has no C++ signatures").restore();
+        }
+        if (overloads.size() == 1u) {
+            CallableOverloadData data(args, kwds, overloads.front().get());
+            if (data.getState() != CallableOverloadData::SUCCESS) {
+                return data.raiseException(name);
+            }
+            return data.call();
+        } else {
+            std::vector<CallableOverloadData> data;
+            data.reserve(overloads.size());
+            std::ptrdiff_t best_index = -1;
+            bool have_tie = false;
+            Penalty best_penalty = std::numeric_limits<unsigned int>::max();
+            for (std::size_t i = 0; i < overloads.size(); ++i) {
+                data.emplace_back(args, kwds, overloads[i].get());
+                if (data[i].getState() == CallableOverloadData::SUCCESS) {
+                    Penalty new_penalty = data[i].getPenalty();
+                    if (new_penalty < best_penalty) {
+                        best_index = i;
+                        best_penalty = new_penalty;
+                        if (best_penalty == 0) break;
+                    } else if (best_penalty == new_penalty) {
+                        have_tie = true;
+                    }
                 }
             }
+            if (best_index < 0) {
+                return raiseAmbiguousOverloadError(
+                    "No single best overload for call to '" + name + "'"
+                ).restore();
+            }
+            return data[best_index].call();
         }
-        if (best_index < 0) {
-            // no matching overload; need to raise an exception
-        }
-        return data[best_index].call();
     } catch (PythonException & err) {
         return err.restore();
     } catch (std::exception & err) {

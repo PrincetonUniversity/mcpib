@@ -75,7 +75,15 @@ public:
 
     CallableOverloadData(PyPtr const & args, PyPtr const & kwds, CallableOverloadBase const * overload);
 
+    CallableOverloadData(CallableOverloadData const &) = delete;
+    CallableOverloadData & operator=(CallableOverloadData const &) = delete;
+
+    CallableOverloadData(CallableOverloadData &&) = default;
+    CallableOverloadData & operator=(CallableOverloadData &&) = default;
+
     ErrorEnum getState() const { return _error_state; }
+
+    PyPtr raiseException(std::string const & function_name) const;
 
     Penalty getPenalty() const;
 
@@ -83,7 +91,7 @@ public:
 
 private:
     ErrorEnum _error_state;
-    std::size_t _error_position;
+    int _error_position;
     std::string _error_string;
     ConverterVector _converters;
     CallableOverloadBase const * _overload;
