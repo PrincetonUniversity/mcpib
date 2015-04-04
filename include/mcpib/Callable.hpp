@@ -27,17 +27,22 @@ public:
     explicit Callable(PyPtr const & py);
 
     template <typename Result, typename ...Args>
-    void addOverload(
+    Callable & addOverload(
         std::function<Result(Args...)> function,
         std::initializer_list<std::string> names,
         TypeRegistry & registry
     ) {
         _addOverload(makeCallableOverload(std::move(function), std::move(names), registry));
+        return *this;
     }
 
     PyPtr call(PyPtr const & args, PyPtr const & kwds) const;
 
+    std::string const & getName() const;
+
 private:
+
+    friend class Module;
 
     void _addOverload(std::unique_ptr<CallableOverloadBase> && overload);
 

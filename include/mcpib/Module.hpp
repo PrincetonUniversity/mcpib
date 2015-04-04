@@ -15,6 +15,8 @@
 
 namespace mcpib {
 
+class Callable;
+
 class Module {
 public:
 
@@ -22,11 +24,24 @@ public:
 
     explicit Module(PyPtr const & py);
 
+    Module(Module const &) = delete;
+
+    Module(Module &&) = delete;
+
+    Module & operator=(Module const &) = delete;
+
+    Module & operator=(Module &&) = delete;
+
+    Module & add(Callable const & callable);
+
     TypeRegistry & getRegistry() { return _registry; }
 
     TypeRegistry const & getRegistry() const { return _registry; }
 
 private:
+
+    friend class Callable;
+
     PyPtr _py;
     TypeRegistry _registry;
 };

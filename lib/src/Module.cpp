@@ -9,6 +9,7 @@
 
 #include "mcpib/Module.hpp"
 #include "mcpib/WrapperError.hpp"
+#include "mcpib/Callable.hpp"
 
 namespace mcpib {
 
@@ -30,6 +31,11 @@ Module::Module(PyPtr const & py) :
 {
     _registry._py = PyPtr::steal(PyObject_GetAttrString(_py.get(), REGISTRY_ATTRIBUTE));
     _registry._checkPyType();
+}
+
+Module & Module::add(Callable const & callable) {
+    PyModule_AddObject(_py.get(), callable.getName().c_str(), callable._py.incref());
+    return *this;
 }
 
 } // namespace mcpib

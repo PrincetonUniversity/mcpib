@@ -171,4 +171,8 @@ void Callable::_addOverload(std::unique_ptr<CallableOverloadBase> && overload) {
     reinterpret_cast<PyCallable*>(_py.get())->overloads.push_back(std::move(overload));
 }
 
+std::string const & Callable::getName() const {
+    return reinterpret_cast<PyCallable*>(_py.get())->name;
+}
+
 } // namespace mcpib
