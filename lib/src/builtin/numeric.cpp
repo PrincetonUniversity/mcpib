@@ -9,6 +9,7 @@
 
 #include "mcpib/builtin/numeric.hpp"
 #include "mcpib/FromPython.hpp"
+#include "mcpib/PythonException.hpp"
 
 #include <climits>
 
@@ -40,11 +41,14 @@ public:
     virtual void * convert() {
         Intermediate value = Derived::convertIntermediate(_ptr);
         if (PyErr_Occurred()) {
-            // TODO: error handling
+            throw PythonException::fetch();
         }
         _value = value;
         if (static_cast<Intermediate>(_value) != value) {
-            // TODO: overflow error
+            throw PythonException::raise(
+                PyPtr::borrow(PyExc_OverflowError),
+                "Cannot convert " + std::to_string(value) + " to " + makeTypeInfo<Target>().demangle()
+            );
         }
         return &_value;
     }
@@ -135,9 +139,6 @@ public:
 
     virtual void * convert() {
         _value = PyFloat_AsDouble(_ptr.get());
-        if (PyErr_Occurred()) {
-            // TODO: handle error
-        }
         return &_value;
     }
 
