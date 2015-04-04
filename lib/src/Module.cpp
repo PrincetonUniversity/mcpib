@@ -38,4 +38,10 @@ Module & Module::add(Callable const & callable) {
     return *this;
 }
 
+Module Module::import(std::string const & module_name) {
+    Module other(PyPtr::steal(PyImport_ImportModule(module_name.c_str())));
+    _registry._import(other.getRegistry());
+    return std::move(other);
+}
+
 } // namespace mcpib

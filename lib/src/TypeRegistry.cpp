@@ -12,6 +12,7 @@
 #include "mcpib/WrapperError.hpp"
 #include "mcpib/internal/initializers.hpp"
 #include "mcpib/internal/trace.hpp"
+#include "mcpib/internal/format.h"
 
 #include <unordered_map>
 
@@ -30,6 +31,8 @@ struct PyTypeRegistry {
     std::shared_ptr<TypeRegistration> lookup(TypeInfo const & t) const;
 
     std::shared_ptr<TypeRegistration> require(TypeInfo const & t);
+
+    void import(PyTypeRegistry const & other);
 
     PyObject base;
     TypeRegistration::Map map;
@@ -106,6 +109,9 @@ std::shared_ptr<TypeRegistration> PyTypeRegistry::require(TypeInfo const & t) {
     return element;
 }
 
+void PyTypeRegistry::import(PyTypeRegistry const & other) {
+}
+
 }     // anonymous
 
 namespace internal {
@@ -126,8 +132,8 @@ PyPtr TypeRegistry::_make() {
 void TypeRegistry::_checkPyType() {
     if (_py->ob_type != &PyTypeRegistry::type) {
         throw raiseWrapperError(
-            std::string("Cannot construct TypeRegistry from Python object of type ")
-            + _py->ob_type->tp_name
+            fmt::format("Cannot construct TypeRegistry from Python object of type {}",
+                        _py->ob_type->tp_name)
         );
     }
 }
@@ -141,5 +147,13 @@ std::shared_ptr<TypeRegistration> TypeRegistry::require(TypeInfo const & t) {
     return reinterpret_cast<PyTypeRegistry*>(_py.get())->require(t);
 }
 
+void TypeRegistry::_import(TypeRegistry const & other) {
+    for (auto const & pair : reinterpret_cast<PyTypeRegistry*>(other._py.get())->map) {
+        TypeInfo const & type = pair.first;
+        std::shared_ptr<TypeRegistration> other_reg = pair.second;
+        std::shared_ptr<TypeRegistration> new_reg = require(type);
+        other_reg->_copyInto(*new_reg, *this);
+    }
+}
 
 } // namespace mcpib

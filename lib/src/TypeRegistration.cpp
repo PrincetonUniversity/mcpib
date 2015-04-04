@@ -8,11 +8,23 @@
  */
 
 #include "mcpib/TypeRegistration.hpp"
+#include "mcpib/TypeRegistry.hpp"
+#include "mcpib/WrapperError.hpp"
 
 namespace mcpib {
 
-void TypeRegistration::registerFromPython(FromPythonFactory factory, bool is_value) {
-    _from_python.push_back(std::make_pair(factory, is_value));
+void TypeRegistration::registerFromPython(FromPythonFactory factory, bool is_lvalue) {
+    for (auto const & pair : _from_python) {
+        if (pair.first == factory) {
+            if (pair.second != is_lvalue) {
+                throw raiseWrapperError(
+                    "Identical from-python converter registered with different lvalue status"
+                );
+            }
+            return;
+        }
+    }
+    _from_python.push_back(std::make_pair(factory, is_lvalue));
 }
 
 std::unique_ptr<FromPythonConverter> TypeRegistration::lookupFromPython(
@@ -27,6 +39,15 @@ std::unique_ptr<FromPythonConverter> TypeRegistration::lookupFromPython(
         }
     }
     return converter;
+}
+
+void TypeRegistration::_copyInto(TypeRegistration & other, TypeRegistry & registry) const {
+    for (auto const & pair : _from_python) {
+        other.registerFromPython(pair.first, pair.second);
+    }
+    for (auto const & pair : _derived) {
+        other._derived[pair.first] = registry.require(pair.first);
+    }
 }
 
 } // namespace mcpib

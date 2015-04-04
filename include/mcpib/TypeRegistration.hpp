@@ -17,6 +17,8 @@
 
 namespace mcpib {
 
+class TypeRegistry;
+
 class TypeRegistration {
 public:
 
@@ -28,6 +30,12 @@ public:
      *
      * The new converter will take precedence over any existing converters for this type
      * (but older converters will be tried when newer ones fail).
+     *
+     * NOTE: the address of the FromPythonFactory function is used to avoid having the same converter
+     * registered multiple times (as would otherwise happen in modules with diamond dependency graphs).
+     * This *should* work even when we have the same template implicitly instantiated in different shared
+     * libraries, according the One Definition Rule, but it's possible some important compilers/linkers
+     * may not handle this correctly.
      */
     void registerFromPython(FromPythonFactory factory, bool is_lvalue);
 
@@ -39,6 +47,14 @@ public:
     std::unique_ptr<FromPythonConverter> lookupFromPython(PyPtr const & p, bool require_lvalue) const;
 
 private:
+
+    friend class TypeRegistry;
+
+    // Copy all state into another TypeRegistration, inserting converters and creating derived-class
+    // TypeRegistrations as necessary in the given registry.
+    // New derived-class TypeRegistrations will only be created (via TypeRegistry::require()); they
+    // will not be copied themselves.
+    void _copyInto(TypeRegistration & other, TypeRegistry & registry) const;
 
     /*
      * Sequence of from-python converter factories, along with a bool indicating whether

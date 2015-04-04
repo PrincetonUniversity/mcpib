@@ -16,13 +16,13 @@ namespace mcpib {
 class TypeRegistry {
 public:
 
+    // TypeRegistry is not copyable.
     TypeRegistry(TypeRegistry const &) = delete;
-
-    TypeRegistry(TypeRegistry &&) = delete;
-
     TypeRegistry & operator=(TypeRegistry const &) = delete;
 
-    TypeRegistry & operator=(TypeRegistry &&) = delete;
+    // TypeRegistry is moveable.
+    TypeRegistry(TypeRegistry &&) = default;
+    TypeRegistry & operator=(TypeRegistry &&) = default;
 
     /*
      * Find the registration for the given type, returning a null pointer if not found.
@@ -43,6 +43,8 @@ private:
     TypeRegistry() {}
 
     void _checkPyType();
+
+    void _import(TypeRegistry const & other);
 
     PyPtr _py;
 };
