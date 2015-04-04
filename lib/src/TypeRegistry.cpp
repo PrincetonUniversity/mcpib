@@ -11,6 +11,7 @@
 #include "mcpib/TypeRegistry.hpp"
 #include "mcpib/WrapperError.hpp"
 #include "mcpib/internal/initializers.hpp"
+#include "mcpib/internal/trace.hpp"
 
 #include <unordered_map>
 
@@ -87,15 +88,20 @@ PyTypeRegistry::PyTypeRegistry() {
 std::shared_ptr<TypeRegistration> PyTypeRegistry::lookup(TypeInfo const & t) const {
     auto iter = map.find(t);
     if (iter == map.end()) {
+        internal::trace<9>("TypeRegistry::lookup: search for {} unsuccessful.", t);
         return std::shared_ptr<TypeRegistration>();
     }
+    internal::trace<9>("TypeRegistry::lookup: search for {} successful", t);
     return iter->second;
 }
 
 std::shared_ptr<TypeRegistration> PyTypeRegistry::require(TypeInfo const & t) {
     std::shared_ptr<TypeRegistration> & element = map[t];
     if (!element) {
+        internal::trace<9>("TypeRegistry::require: search for {} unsuccessful; adding.", t);
         element = std::make_shared<TypeRegistration>();
+    } else {
+        internal::trace<9>("TypeRegistry::require: search for {} successful.", t);
     }
     return element;
 }
