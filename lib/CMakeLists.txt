@@ -1,5 +1,6 @@
 add_library(mcpib SHARED
   src/builtin/numeric.cpp
+  src/internal/format.cc
   src/Callable.cpp
   src/CallableOverload.cpp
   src/Module.cpp
