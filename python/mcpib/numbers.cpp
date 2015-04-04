@@ -7,13 +7,13 @@
  * of the source distribution.
  */
 
-#include "mcpib/builtin/numeric.hpp"
+#include "mcpib/Module.hpp"
 #include "mcpib/FromPython.hpp"
 #include "mcpib/PythonException.hpp"
 
 #include <climits>
 
-namespace mcpib { namespace builtin {
+namespace mcpib {
 
 namespace {
 
@@ -147,10 +147,16 @@ private:
     Target _value;
 };
 
-
 } // anonymous
+} // namespace mcpib
 
-void registerNumericConverters(TypeRegistry & registry) {
+
+using namespace mcpib;
+
+PyMODINIT_FUNC
+initnumbers(void) {
+    Module module("numbers");
+    TypeRegistry & registry = module.getRegistry();
     BoolFromPythonConverter::declare(registry);
 #if CHAR_MIN < 0
     LongFromPythonConverter<char>::declare(registry);
@@ -170,5 +176,3 @@ void registerNumericConverters(TypeRegistry & registry) {
     FloatFromPythonConverter<float>::declare(registry);
     FloatFromPythonConverter<double>::declare(registry);
 }
-
-}} // namespace mcpib::builtin
