@@ -3,6 +3,8 @@ project(mcpib)
 
 enable_testing()
 
+set(CMAKE_CXX_FLAGS "${CMAKE_C_FLAGS} -O0 -ggdb")
+
 add_subdirectory(cmake)
 
 include_directories(
@@ -14,3 +16,4 @@ include_directories(
 add_subdirectory(lib)
 add_subdirectory(python/mcpib)
 add_subdirectory(tests)
+
