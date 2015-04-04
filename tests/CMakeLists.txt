@@ -18,3 +18,4 @@ endfunction(add_dual_test)
 
 add_python_test(exceptions_test)
 add_dual_test(cpp_utils)
+add_dual_test(builtin_numeric)
