@@ -3,3 +3,6 @@ Scope base class for Module (and someday, Class)
 Infer lambda types when passed to Callable::addOverload
 
 Direct storage of function objects instead of std::function.
+
+Make it unnecessary (but still possible) to pass TypeRegistry
+to Callable::addOverload.
