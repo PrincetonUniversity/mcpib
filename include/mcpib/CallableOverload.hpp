@@ -9,7 +9,7 @@
 #ifndef MCPIB_CallableOverload_hpp_INCLUDED
 #define MCPIB_CallableOverload_hpp_INCLUDED
 
-#include "mcpib/FromPython.hpp"
+#include "mcpib/FromPythonConverter.hpp"
 #include "mcpib/TypeRegistry.hpp"
 #include "mcpib/metaprogramming.hpp"
 

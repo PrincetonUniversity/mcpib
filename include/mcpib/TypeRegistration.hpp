@@ -9,7 +9,7 @@
 #ifndef MCPIB_TypeRegistration_hpp_INCLUDED
 #define MCPIB_TypeRegistration_hpp_INCLUDED
 
-#include "mcpib/FromPython.hpp"
+#include "mcpib/FromPythonConverter.hpp"
 #include "mcpib/TypeInfo.hpp"
 
 #include <vector>

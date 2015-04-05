@@ -6,8 +6,8 @@
  * see the LICENSE file that should be present in the root
  * of the source distribution.
  */
-#ifndef MCPIB_FromPython_hpp_INCLUDED
-#define MCPIB_FromPython_hpp_INCLUDED
+#ifndef MCPIB_FromPythonConverter_hpp_INCLUDED
+#define MCPIB_FromPythonConverter_hpp_INCLUDED
 
 #include "mcpib/PyPtr.hpp"
 #include "mcpib/TypeInfo.hpp"
@@ -112,4 +112,4 @@ public:
 
 } // namespace mcpib
 
-#endif // !MCPIB_FromPython_hpp_INCLUDED
+#endif // !MCPIB_FromPythonConverter_hpp_INCLUDED

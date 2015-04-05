@@ -8,7 +8,7 @@
  */
 
 #include "mcpib/Module.hpp"
-#include "mcpib/FromPython.hpp"
+#include "mcpib/FromPythonConverter.hpp"
 #include "mcpib/PythonException.hpp"
 
 #include <climits>
