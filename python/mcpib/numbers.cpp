@@ -83,7 +83,16 @@ public:
     static bool check(PyPtr const & p) { return PyInt_Check(p.get()) || PyLong_Check(p.get()); }
 
     static long long convertIntermediate(PyPtr const & p) {
-        return PyLong_AsLongLong(p.get());
+        long long r;
+        if (PyInt_Check(p)) {
+            r = PyInt_AsLong(p.get());
+        } else {
+            r = PyLong_AsLongLong(p.get());
+        }
+        if (PyErr_Occurred()) {
+            throw PythonException::fetch();
+        }
+        return r;
     }
 
     // TODO: inherit ctor
@@ -102,7 +111,23 @@ public:
     static bool check(PyPtr const & p) { return PyInt_Check(p.get()) || PyLong_Check(p.get()); }
 
     static unsigned long long convertIntermediate(PyPtr const & p) {
-        return PyLong_AsUnsignedLongLong(p.get());
+        unsigned long long r = 0;
+        if (PyInt_Check(p)) {
+            long tmp = PyInt_AsLong(p.get());
+            if (tmp < 0) {
+                throw PythonException::raise(
+                    PyPtr::borrow(PyExc_OverflowError),
+                    "Error converting negative integer to unsigned"
+                );
+            }
+            r = tmp;
+        } else {
+            r = PyLong_AsUnsignedLongLong(p.get());
+        }
+        if (PyErr_Occurred()) {
+            throw PythonException::fetch();
+        }
+        return r;
     }
 
     // TODO: inherit ctor
@@ -175,4 +200,5 @@ initnumbers(void) {
     UnsignedLongFromPythonConverter<unsigned long long>::declare(registry);
     FloatFromPythonConverter<float>::declare(registry);
     FloatFromPythonConverter<double>::declare(registry);
+    FloatFromPythonConverter<long double>::declare(registry);
 }

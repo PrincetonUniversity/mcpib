@@ -12,15 +12,34 @@
 
 using namespace mcpib;
 
+#define ADD_ACCEPT_FUNC(name, type)                                     \
+    module.add(                                                         \
+        Callable("accept_" name).addOverload(                           \
+            std::function<void(type)>([](type x) {}), {"x"}, module.getRegistry() \
+        )                                                               \
+    );                                                                  \
+    module.add("bits_" name , PyPtr::steal(PyInt_FromLong(8*sizeof(type))))
+
 PyMODINIT_FUNC
 initbuiltin_numeric_mod(void) {
     Module module("builtin_numeric_mod", "unit tests for builtin numeric converters");
     module.import("mcpib.numbers");
     module.add(
-        Callable("accept_int_return_1").addOverload(
-            std::function<int(int)>([](int x) { return 1; }),
-            {"x"},
-            module.getRegistry()
-        )
+        "char_is_signed",
+        PyPtr::steal(PyBool_FromLong(static_cast<char>(-1) < 0))
     );
+    ADD_ACCEPT_FUNC("char", char);
+    ADD_ACCEPT_FUNC("signed_char", signed char);
+    ADD_ACCEPT_FUNC("unsigned_char", unsigned char);
+    ADD_ACCEPT_FUNC("short", short);
+    ADD_ACCEPT_FUNC("unsigned_short", unsigned short);
+    ADD_ACCEPT_FUNC("int", int);
+    ADD_ACCEPT_FUNC("unsigned_int", unsigned int);
+    ADD_ACCEPT_FUNC("long", long);
+    ADD_ACCEPT_FUNC("unsigned_long", unsigned long);
+    ADD_ACCEPT_FUNC("long_long", long long);
+    ADD_ACCEPT_FUNC("unsigned_long_long", unsigned long long);
+    ADD_ACCEPT_FUNC("float", float);
+    ADD_ACCEPT_FUNC("double", double);
+    ADD_ACCEPT_FUNC("long_double", long double);
 }
