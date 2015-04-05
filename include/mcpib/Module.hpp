@@ -38,6 +38,8 @@ public:
 
     Module & add(Callable const & callable);
 
+    Module & add(std::string const & name, PyPtr const & value);
+
     TypeRegistry & getRegistry() { return _registry; }
 
     TypeRegistry const & getRegistry() const { return _registry; }

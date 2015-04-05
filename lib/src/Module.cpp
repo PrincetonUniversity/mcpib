@@ -38,6 +38,11 @@ Module & Module::add(Callable const & callable) {
     return *this;
 }
 
+Module & Module::add(std::string const & name, PyPtr const & value) {
+    PyModule_AddObject(_py.get(), name.c_str(), value.incref());
+    return *this;
+}
+
 Module Module::import(std::string const & module_name) {
     Module other(PyPtr::steal(PyImport_ImportModule(module_name.c_str())));
     _registry._import(other.getRegistry());
