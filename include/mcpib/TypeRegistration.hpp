@@ -22,7 +22,7 @@ class TypeRegistry;
 class TypeRegistration {
 public:
 
-    typedef std::vector<std::pair<FromPythonFactory,bool>> FromPythonList;
+    typedef std::vector<std::unique_ptr<FromPythonFactory>> FromPythonList;
     typedef std::unordered_map<TypeInfo,std::shared_ptr<TypeRegistration>> Map;
 
     /*
@@ -30,14 +30,8 @@ public:
      *
      * The new converter will take precedence over any existing converters for this type
      * (but older converters will be tried when newer ones fail).
-     *
-     * NOTE: the address of the FromPythonFactory function is used to avoid having the same converter
-     * registered multiple times (as would otherwise happen in modules with diamond dependency graphs).
-     * This *should* work even when we have the same template implicitly instantiated in different shared
-     * libraries, according the One Definition Rule, but it's possible some important compilers/linkers
-     * may not handle this correctly.
      */
-    void registerFromPython(FromPythonFactory factory, bool is_lvalue);
+    void registerFromPython(std::unique_ptr<FromPythonFactory> factory);
 
     /*
      * Find a from-Python converter that works for the given Python object.

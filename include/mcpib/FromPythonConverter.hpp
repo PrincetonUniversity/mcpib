@@ -19,26 +19,26 @@ namespace mcpib {
 
 typedef unsigned int Penalty;
 
+class TypeRegistry;
+
 /*
  * Base class for all from-Python converters.
  *
- * Derived classes of FromPythonConverter must be created via a free function or static member function
- * that matches the signature of the FromPythonFactory typedef - that is, it takes a single PyPtr
- * argument, and returns a unique_ptr<FromPythonConverter>.  The returned pointer should be null
- * if no conversion is possible.  If a conversion is possible, the factory function should pass
- * whatever information is necessary to complete the conversion (usually at least the PyPtr itself)
- * to the derived converter's constructor.
+ * Derived classes of FromPythonConverter are created via an instance of FromPythonFactory (see
+ * below).  The returned pointer should be null if no conversion is possible.  If a conversion is
+ * possible, the factory should pass whatever information is necessary to complete the conversion
+ * (usually at least the PyPtr itself) to the derived converter's constructor.
  *
- * Derived class constructors must pass an integer penalty value to the base class constructor, which
- * indicates how appropriate the converter is for the Python object we're attempting to convert.  A
- * penalty of zero indicates a perfect match, with higher numbers indicating implicit conversions
- * (including conversions from a Python object that holds a derived classes when looking for a base
- * class reference or pointer; each level of inheritance should correspond to one unit of penalty).
- * When converting types for overloaded functions, the maximum penalty value of all arguments is
- * used to compare different overloads to detemrine which one will be called.
+ * Derived class constructors must pass an integer penalty value to the base class constructor,
+ * which indicates how appropriate the converter is for the Python object we're attempting to
+ * convert.  A penalty of zero indicates a perfect match, with higher numbers indicating implicit
+ * conversions (including conversions from a Python object that holds a derived classes when looking
+ * for a base class reference or pointer; each level of inheritance should correspond to one unit of
+ * penalty).  When converting types for overloaded functions, the maximum penalty value of all
+ * arguments is used to compare different overloads to detemrine which one will be called.
  *
- * All derived classes must implement convert() to actually carry out the conversion, and provide
- * a non-trivial destructor if needed to clean up the pointer returned by convert().  A postcall()
+ * All derived classes must implement convert() to actually carry out the conversion, and provide a
+ * non-trivial destructor if needed to clean up the pointer returned by convert().  A postcall()
  * method may also be provided, and will be called after the function that used the converter is
  * called.
  */
@@ -57,9 +57,71 @@ public:
 
 };
 
-typedef std::unique_ptr<FromPythonConverter> (*FromPythonFactory)(PyPtr const &);
-
 typedef std::vector<std::unique_ptr<FromPythonConverter>> ConverterVector;
+
+/*
+ * Factory class for FromPythonConverter.
+ *
+ * FromPythonFactory instances held by a TypeRegistration for the C++ type the converters they
+ * create convert to.
+ */
+class FromPythonFactory {
+public:
+
+    /*
+     * Return a converter that maps the given Python object to a C++ object, if possible.
+     *
+     * If this factory cannot produce a factory that is likely to work for the given object,
+     * it should return nullptr.
+     *
+     * The returned converter is not guaranteed to work, but it should be a likely enough
+     * match that the quality of the match can be used to resolve which of several overloads
+     * of a function should be called.
+     */
+    virtual std::unique_ptr<FromPythonConverter> apply(PyPtr const &) const = 0;
+
+    /*
+     * A unique name for this converter.
+     *
+     * This will be used to compare converters when they're registered to prevent duplicates (even
+     * when the same templated converter is instantiated in different modules).
+     */
+    std::string const name;
+
+    /*
+     * Whether is converter is appropriate for lvalues.
+     *
+     * C++ functions that take lvalue arguments (non-const references or pointers)
+     * require lvalue conveters, which allow modifications to those arguments to be transferred
+     * back to Python.  This can reflect either a converter that extracts a C++ object from
+     * a Python object that holds it, hence truly modifying it in place, or a converter
+     * that uses the postcall() method to copy temporary state back to a Python object.
+     *
+     * Note that some common Python types, including strings, and numbers, can never
+     * be converted by an lvalue converter, because they are intrinsically immutable.
+     * C++ functions that use output arguments for these types must be converted to
+     * return multiple values instead.
+     */
+    bool const is_lvalue;
+
+    /*
+     * Return a copy of this converter appropriate for a different registry.
+     *
+     * When registries are copied, any converters that hold TypeRegistrations (in order
+     * to delegate to other converters) must be copied in a way that swaps in new
+     * TypeRegistrations from the new TypeRegistry.  The new TypeRegistry may not be
+     * fully populated at the time a particular converter is copied, however, so
+     * implementations of this method should use registry.require() to obtain any
+     * new TypeRegistrations they require, without assuming anything else about those
+     * registations at that time.
+     */
+    virtual std::unique_ptr<FromPythonFactory> clone(TypeRegistry & registry) const = 0;
+
+    virtual ~FromPythonFactory() {}
+
+protected:
+    FromPythonFactory(std::string const & name_, bool is_lvalue_) : name(name_), is_lvalue(is_lvalue_) {}
+};
 
 
 template <typename T>

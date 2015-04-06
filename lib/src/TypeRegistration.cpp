@@ -13,18 +13,13 @@
 
 namespace mcpib {
 
-void TypeRegistration::registerFromPython(FromPythonFactory factory, bool is_lvalue) {
-    for (auto const & pair : _from_python) {
-        if (pair.first == factory) {
-            if (pair.second != is_lvalue) {
-                throw raiseWrapperError(
-                    "Identical from-python converter registered with different lvalue status"
-                );
-            }
+void TypeRegistration::registerFromPython(std::unique_ptr<FromPythonFactory> factory) {
+    for (auto const & existing : _from_python) {
+        if (factory->name == existing->name) {
             return;
         }
     }
-    _from_python.push_back(std::make_pair(factory, is_lvalue));
+    _from_python.push_back(std::move(factory));
 }
 
 std::unique_ptr<FromPythonConverter> TypeRegistration::lookupFromPython(
@@ -33,8 +28,8 @@ std::unique_ptr<FromPythonConverter> TypeRegistration::lookupFromPython(
 ) const {
     std::unique_ptr<FromPythonConverter> converter;
     for (auto iter = _from_python.rbegin(); iter != _from_python.rend(); ++iter) {
-        if (!require_lvalue || iter->second) {
-            converter = (*iter->first)(p);
+        if (!require_lvalue || (**iter).is_lvalue) {
+            converter = (**iter).apply(p);
             if (converter) break;
         }
     }
@@ -42,8 +37,8 @@ std::unique_ptr<FromPythonConverter> TypeRegistration::lookupFromPython(
 }
 
 void TypeRegistration::_copyInto(TypeRegistration & other, TypeRegistry & registry) const {
-    for (auto const & pair : _from_python) {
-        other.registerFromPython(pair.first, pair.second);
+    for (auto const & other_conv : _from_python) {
+        other.registerFromPython(other_conv->clone(registry));
     }
     for (auto const & pair : _derived) {
         other._derived[pair.first] = registry.require(pair.first);

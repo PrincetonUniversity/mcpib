@@ -21,16 +21,29 @@ template <typename Derived, typename Target, typename Intermediate>
 class IntegerFromPythonConverter : public FromPythonConverter {
 public:
 
-    static std::unique_ptr<FromPythonConverter> make(PyPtr const & p) {
-        if (Derived::check(p)) {
-            return std::unique_ptr<FromPythonConverter>(new Derived(p, 0));
-        } else {
-            return std::unique_ptr<FromPythonConverter>();
-        }
-    }
+    class Factory : public FromPythonFactory {
+    public:
 
-    static void declare(TypeRegistry & registry) {
-        registry.require(makeTypeInfo<Target>())->registerFromPython(&make, false);
+        explicit Factory(std::string const & name) : FromPythonFactory(name, false) {}
+
+        virtual std::unique_ptr<FromPythonConverter> apply(PyPtr const & py) const {
+            if (Derived::check(py)) {
+                return std::unique_ptr<FromPythonConverter>(new Derived(py, 0));
+            } else {
+                return std::unique_ptr<FromPythonConverter>();
+            }
+        }
+
+        virtual std::unique_ptr<FromPythonFactory> clone(TypeRegistry & registry) const {
+            return std::unique_ptr<FromPythonFactory>(new Factory(this->name));
+        }
+
+    };
+
+    static void declare(std::string const & name, TypeRegistry & registry) {
+        registry.require(makeTypeInfo<Target>())->registerFromPython(
+            std::unique_ptr<FromPythonFactory>(new Factory(name))
+        );
     }
 
     explicit IntegerFromPythonConverter(PyPtr const & p, Penalty penalty) :
@@ -142,19 +155,32 @@ template <typename Target>
 class FloatFromPythonConverter : public FromPythonConverter {
 public:
 
-    static std::unique_ptr<FromPythonConverter> make(PyPtr const & p) {
-        if (PyFloat_Check(p.get())) {
-            return std::unique_ptr<FromPythonConverter>(new FloatFromPythonConverter<Target>(p, 0));
-        } else if (PyInt_Check(p.get()) || PyLong_Check(p.get())) {
-            PyPtr p2 = PyPtr::borrow(PyNumber_Float(p.get()));
-            return std::unique_ptr<FromPythonConverter>(new FloatFromPythonConverter<Target>(p2, 1));
-        } else {
-            return std::unique_ptr<FromPythonConverter>();
-        }
-    }
+    class Factory : public FromPythonFactory {
+    public:
 
-    static void declare(TypeRegistry & registry) {
-        registry.require(makeTypeInfo<Target>())->registerFromPython(&make, false);
+        explicit Factory(std::string const & name) : FromPythonFactory(name, false) {}
+
+        virtual std::unique_ptr<FromPythonConverter> apply(PyPtr const & p) const {
+            if (PyFloat_Check(p.get())) {
+                return std::unique_ptr<FromPythonConverter>(new FloatFromPythonConverter<Target>(p, 0));
+            } else if (PyInt_Check(p.get()) || PyLong_Check(p.get())) {
+                PyPtr p2 = PyPtr::borrow(PyNumber_Float(p.get()));
+                return std::unique_ptr<FromPythonConverter>(new FloatFromPythonConverter<Target>(p2, 1));
+            } else {
+                return std::unique_ptr<FromPythonConverter>();
+            }
+        }
+
+        virtual std::unique_ptr<FromPythonFactory> clone(TypeRegistry & registry) const {
+            return std::unique_ptr<FromPythonFactory>(new Factory(this->name));
+        }
+
+    };
+
+    static void declare(std::string const & name, TypeRegistry & registry) {
+        registry.require(makeTypeInfo<Target>())->registerFromPython(
+            std::unique_ptr<FromPythonFactory>(new Factory(name))
+        );
     }
 
     explicit FloatFromPythonConverter(PyPtr const & p, Penalty penalty) :
@@ -182,23 +208,23 @@ PyMODINIT_FUNC
 initnumbers(void) {
     Module module("numbers");
     TypeRegistry & registry = module.getRegistry();
-    BoolFromPythonConverter::declare(registry);
+    BoolFromPythonConverter::declare("mcpib.numbers.bool", registry);
 #if CHAR_MIN < 0
-    LongFromPythonConverter<char>::declare(registry);
+    LongFromPythonConverter<char>::declare("mcpib.numbers.char", registry);
 #else
-    UnsignedLongFromPythonConverter<char>::declare(registry);
+    UnsignedLongFromPythonConverter<char>::declare("mcpib.numbers.char", registry);
 #endif
-    LongFromPythonConverter<signed char>::declare(registry);
-    LongFromPythonConverter<short>::declare(registry);
-    LongFromPythonConverter<int>::declare(registry);
-    LongFromPythonConverter<long>::declare(registry);
-    LongFromPythonConverter<long long>::declare(registry);
-    UnsignedLongFromPythonConverter<unsigned char>::declare(registry);
-    UnsignedLongFromPythonConverter<unsigned short>::declare(registry);
-    UnsignedLongFromPythonConverter<unsigned int>::declare(registry);
-    UnsignedLongFromPythonConverter<unsigned long>::declare(registry);
-    UnsignedLongFromPythonConverter<unsigned long long>::declare(registry);
-    FloatFromPythonConverter<float>::declare(registry);
-    FloatFromPythonConverter<double>::declare(registry);
-    FloatFromPythonConverter<long double>::declare(registry);
+    LongFromPythonConverter<signed char>::declare("mcpib.numbers.schar", registry);
+    LongFromPythonConverter<short>::declare("mcpib.numbers.short", registry);
+    LongFromPythonConverter<int>::declare("mcpib.numbers.int", registry);
+    LongFromPythonConverter<long>::declare("mcpib.numbers.long", registry);
+    LongFromPythonConverter<long long>::declare("mcpib.numbers.longlong", registry);
+    UnsignedLongFromPythonConverter<unsigned char>::declare("mcpib.numbers.uchar", registry);
+    UnsignedLongFromPythonConverter<unsigned short>::declare("mcpib.numbers.ushort", registry);
+    UnsignedLongFromPythonConverter<unsigned int>::declare("mcpib.numbers.uint", registry);
+    UnsignedLongFromPythonConverter<unsigned long>::declare("mcpib.numbers.ulong", registry);
+    UnsignedLongFromPythonConverter<unsigned long long>::declare("mcpib.numbers.ulonglong", registry);
+    FloatFromPythonConverter<float>::declare("mcpib.numbers.float", registry);
+    FloatFromPythonConverter<double>::declare("mcpib.numbers.double", registry);
+    FloatFromPythonConverter<long double>::declare("mcpib.numbers.longdouble", registry);
 }
