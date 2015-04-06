@@ -1,4 +1,5 @@
 add_library(mcpib SHARED
+  src/detail/FromPythonImpl.cpp
   src/internal/format.cc
   src/Callable.cpp
   src/CallableOverload.cpp
