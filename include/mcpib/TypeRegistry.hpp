@@ -13,6 +13,8 @@
 
 namespace mcpib {
 
+template <typename T> class FromPython;
+
 class TypeRegistry {
 public:
 
@@ -33,6 +35,14 @@ public:
      * Find the registration for the given type, inserting a new one if not found.
      */
     std::shared_ptr<TypeRegistration> require(TypeInfo const & t);
+
+    /*
+     * Return a from-Python converter that maps the given Python object to the given C++ type.
+     *
+     * This function is defined in FromPython.hpp.
+     */
+    template <typename T>
+    FromPython<T> fromPython(PyPtr const & p) const;
 
 private:
 

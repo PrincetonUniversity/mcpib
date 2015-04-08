@@ -22,7 +22,7 @@ namespace mcpib {
  *
  * Operations that need detailed control over exactly when different aspects of conversion should be
  * performed (e.g. argument parsing for overload resolution) should use FromPythonConverters and
- * AdaptFromPython directly, but most user code can just use FromPython.
+ * FromPythonTraits directly, but most user code can just use FromPython.
  */
 template <typename T>
 class FromPython {
@@ -40,7 +40,7 @@ public:
      *  object will be returned, which can be tested by casting to bool.
      */
     FromPython(PyPtr const & p, std::shared_ptr<TypeRegistration> registration) :
-        _impl(p, AdaptFromPython<T>::is_lvalue, registration)
+        _impl(p, FromPythonTraits<T>::is_lvalue, registration)
     {}
 
     /*
@@ -66,12 +66,17 @@ public:
      */
     T operator()() const {
         _impl.require();
-        return AdaptFromPython<T>::adapt(_impl.converter->convert());
+        return FromPythonTraits<T>::adapt(_impl.converter->convert());
     }
 
 private:
     detail::FromPythonImpl _impl;
 };
+
+template <typename T>
+FromPython<T> TypeRegistry::fromPython(PyPtr const & p) {
+    return FromPython<T>(p, this->lookup(FromPythonTraits<T>::getTypeInfo()));
+}
 
 } // namespace mcpib
 

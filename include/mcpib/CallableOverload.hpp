@@ -37,7 +37,7 @@ public:
 
     template <int N, typename T>
     void apply() const {
-        arguments[N].is_lvalue = AdaptFromPython<T>::is_lvalue;
+        arguments[N].is_lvalue = FromPythonTraits<T>::is_lvalue;
         arguments[N].registration = _registry->require(makeTypeInfo<T>());
     }
 
@@ -53,7 +53,7 @@ struct ArgumentConverter {
 
     template <int N, typename T>
     T apply() const {
-        return AdaptFromPython<T>::adapt(_converters[N]->convert());
+        return FromPythonTraits<T>::adapt(_converters[N]->convert());
     }
 
 private:

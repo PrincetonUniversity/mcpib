@@ -125,7 +125,7 @@ protected:
 
 
 template <typename T>
-class AdaptFromPython {
+class FromPythonTraits {
 public:
     static bool const is_lvalue = false;
     static TypeInfo getTypeInfo() { return makeTypeInfo<T>(); }
@@ -133,7 +133,7 @@ public:
 };
 
 template <typename U>
-class AdaptFromPython<U const> {
+class FromPythonTraits<U const> {
 public:
     static bool const is_lvalue = false;
     static TypeInfo getTypeInfo() { return makeTypeInfo<U>(); }
@@ -141,7 +141,7 @@ public:
 };
 
 template <typename U>
-class AdaptFromPython<U *> {
+class FromPythonTraits<U *> {
 public:
     static bool const is_lvalue = true;
     static TypeInfo getTypeInfo() { return makeTypeInfo<U>(); }
@@ -149,7 +149,7 @@ public:
 };
 
 template <typename U>
-class AdaptFromPython<U &> {
+class FromPythonTraits<U &> {
 public:
     static bool const is_lvalue = true;
     static TypeInfo getTypeInfo() { return makeTypeInfo<U>(); }
@@ -157,7 +157,7 @@ public:
 };
 
 template <typename U>
-class AdaptFromPython<U const *> {
+class FromPythonTraits<U const *> {
 public:
     static bool const is_lvalue = false;
     static TypeInfo getTypeInfo() { return makeTypeInfo<U>(); }
@@ -165,7 +165,7 @@ public:
 };
 
 template <typename U>
-class AdaptFromPython<U const &> {
+class FromPythonTraits<U const &> {
 public:
     static bool const is_lvalue = false;
     static TypeInfo getTypeInfo() { return makeTypeInfo<U>(); }
