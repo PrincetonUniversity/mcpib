@@ -12,6 +12,7 @@
 #include "mcpib/FromPythonConverter.hpp"
 #include "mcpib/TypeRegistry.hpp"
 #include "mcpib/metaprogramming.hpp"
+#include "mcpib/ToPythonTraits.hpp"
 
 #include <string>
 #include <memory>
@@ -98,6 +99,39 @@ private:
 };
 
 
+template <typename Result>
+class ReturnConverter {
+public:
+
+    explicit ReturnConverter(TypeRegistry & registry) :
+        _registration(registry.require(ToPythonTraits<Result>::getTypeInfo()))
+    {}
+
+    template <typename ArgumentBuilder, typename ...Args>
+    PyPtr apply(ArgumentBuilder builder, std::function<Result(Args...)> const & function) const {
+        return _registration->toPython(callFunction(builder, function));
+    }
+
+private:
+    std::shared_ptr<TypeRegistration> _registration;
+};
+
+
+template <>
+class ReturnConverter<void> {
+public:
+
+    explicit ReturnConverter(TypeRegistry &) {}
+
+    template <typename ArgumentBuilder, typename ...Args>
+    PyPtr apply(ArgumentBuilder builder, std::function<void(Args...)> const & function) const {
+        callFunction(builder, function);
+        return PyPtr::borrow(Py_None);
+    }
+
+};
+
+
 class CallableOverloadBase {
 public:
 
@@ -119,23 +153,26 @@ template <typename Result, typename ...Args>
 class CallableOverload : public CallableOverloadBase {
 public:
 
-    explicit CallableOverload(std::function<Result(Args...)> function, ArgumentDataVector arguments) :
+    explicit CallableOverload(
+        std::function<Result(Args...)> function,
+        ArgumentDataVector arguments,
+        TypeRegistry & registry
+    ) :
         CallableOverloadBase(std::move(arguments)),
-        _function(std::move(function))
+        _function(std::move(function)),
+        _return_converter(registry)
     {}
 
 protected:
 
     virtual PyPtr call(ConverterVector const & converters) const {
-        callFunction(ArgumentConverter(converters), _function);
-        // TODO: handle return value
-        return PyPtr::borrow(Py_None);
+        return _return_converter.apply(ArgumentConverter(converters), _function);
     }
 
 private:
     std::function<Result(Args...)> _function;
+    ReturnConverter<Result> _return_converter;
 };
-
 
 template <typename Result, typename ...Args>
 std::unique_ptr<CallableOverloadBase> makeCallableOverload(
@@ -146,7 +183,7 @@ std::unique_ptr<CallableOverloadBase> makeCallableOverload(
     ArgumentDataBuilder builder(registry, std::move(names));
     ForEach<Args...>::apply(builder);
     return std::unique_ptr<CallableOverloadBase>(
-        new CallableOverload<Result,Args...>(std::move(function), std::move(builder.arguments))
+        new CallableOverload<Result,Args...>(std::move(function), std::move(builder.arguments), registry)
     );
 }
 
