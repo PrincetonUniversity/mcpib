@@ -44,11 +44,22 @@ public:
     template <typename T>
     FromPython<T> fromPython(PyPtr const & p) const;
 
+    /*
+     * Convert a C++ object to Python.
+     *
+     * This function is defined in ToPythonTraits.hpp.
+     */
+    template <typename T>
+    PyPtr toPython(T && v) const;
+
 private:
 
     friend class Module;
 
     static PyPtr _make();
+
+    // Find the registration for given type, throwing ToPythonError if not found.
+    std::shared_ptr<TypeRegistration> _lookupToPython(TypeInfo const & t) const;
 
     TypeRegistry() {}
 

@@ -19,6 +19,7 @@ static PyObject * UnknownCppException = nullptr;
 static PyObject * SignatureError = nullptr;
 static PyObject * FromPythonError = nullptr;
 static PyObject * AmbiguousOverloadError = nullptr;
+static PyObject * ToPythonError = nullptr;
 
 void addException(
     PyPtr const & module, PyObject * & type,
@@ -54,6 +55,9 @@ void declareWrapperErrors(PyPtr const & module) {
     addException(module, AmbiguousOverloadError, "mcpib.AmbiguousOverloadError",
                  "Exception raised when there is no single C++ overload that best matches the Python types",
                  SignatureError);
+    addException(module, ToPythonError, "mcpib.ToPythonError",
+                 "Exception raised when a C++ object cannot be converted to Python",
+                 PyPtr::steal(PyTuple_Pack(2, WrapperError, PyExc_TypeError)).get());
 }
 
 } // namespace internal
@@ -76,6 +80,10 @@ PythonException raiseFromPythonError(std::string message) {
 
 PythonException raiseAmbiguousOverloadError(std::string message) {
     return PythonException::raise(PyPtr::borrow(AmbiguousOverloadError), std::move(message));
+}
+
+PythonException raiseToPythonError(std::string message) {
+    return PythonException::raise(PyPtr::borrow(ToPythonError), std::move(message));
 }
 
 } // namespace mcpib

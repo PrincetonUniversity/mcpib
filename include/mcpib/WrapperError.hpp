@@ -26,6 +26,9 @@ PythonException raiseFromPythonError(std::string message);
 // Thrown when there is a tie for which of a set of overloaded functions should be invoked.
 PythonException raiseAmbiguousOverloadError(std::string message);
 
+// Thrown when to-Python conversions fail.  Inherits from TypeError and WrapperError.
+PythonException raiseToPythonError(std::string message);
+
 } // namespace mcpib
 
 #endif // !MCPIB_WrapperError_hpp_INCLUDED

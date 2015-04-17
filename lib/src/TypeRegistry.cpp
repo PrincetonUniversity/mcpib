@@ -147,6 +147,15 @@ std::shared_ptr<TypeRegistration> TypeRegistry::require(TypeInfo const & t) {
     return reinterpret_cast<PyTypeRegistry*>(_py.get())->require(t);
 }
 
+std::shared_ptr<TypeRegistration> TypeRegistry::_lookupToPython(TypeInfo const & t) const {
+    auto r = lookup(t);
+    if (!r) {
+        throw raiseToPythonError(fmt::format("No type registration found for '%s'", t.demangle()));
+    }
+    return r;
+}
+
+
 void TypeRegistry::_import(TypeRegistry const & other) {
     for (auto const & pair : reinterpret_cast<PyTypeRegistry*>(other._py.get())->map) {
         TypeInfo const & type = pair.first;
