@@ -121,9 +121,14 @@ PyPtr PyCallable::call(PyPtr const & args, PyPtr const & kwds) const {
                     }
                 }
             }
-            if (best_index < 0) {
+            if (have_tie < 0) {
                 return raiseAmbiguousOverloadError(
                     "No single best overload for call to '" + name + "'"
+                ).restore();
+            }
+            if (best_index < -1) {
+                return raiseFromPythonError(
+                    "No valid overload for call to '" + name + "'"
                 ).restore();
             }
             return data[best_index].call();

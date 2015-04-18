@@ -25,6 +25,19 @@ ArgumentDataBuilder::ArgumentDataBuilder(TypeRegistry & registry, std::initializ
     }
 }
 
+namespace {
+
+Py_ssize_t findArgument(ArgumentDataVector const & arguments, char const * name) {
+    for (std::size_t index = 0; index < arguments.size(); ++index) {
+        if (arguments[index].name == name) {
+            return index;
+        }
+    }
+    return -1;
+}
+
+} // anonymous
+
 CallableOverloadData::CallableOverloadData(
     PyPtr const & args, PyPtr const & kwds,
     CallableOverloadBase const * overload
@@ -50,7 +63,33 @@ CallableOverloadData::CallableOverloadData(
             return;
         }
     }
-    // TODO: handle keyword arguments
+    if (!kwds) return;
+    PyObject * key = nullptr;
+    PyObject * value = nullptr;
+    Py_ssize_t kwd_index = 0;
+    while (PyDict_Next(kwds.get(), &kwd_index, &key, &value)) {
+        char const * name = PyString_AS_STRING(key);
+        Py_ssize_t index = findArgument(_overload->_arguments, name);
+        if (index < 0) {
+            _error_state = UNKNOWN_KWARG;
+            _error_string = name;
+            return;
+        }
+        if (_converters[index]) {
+            _error_state = DUPLICATE_ARG;
+            _error_position = index;
+        }
+        ArgumentData const & arg_data = _overload->_arguments[index];
+        _converters[index] = arg_data.registration->lookupFromPython(
+            PyPtr::borrow(value),
+            arg_data.is_lvalue
+        );
+        if (!_converters[index]) {
+            _error_state = NO_CONVERTER;
+            _error_position = index;
+            return;
+        }
+    }
 }
 
 PyPtr CallableOverloadData::raiseException(std::string const & function_name) const {

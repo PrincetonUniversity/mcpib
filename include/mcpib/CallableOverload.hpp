@@ -71,7 +71,9 @@ public:
     enum ErrorEnum {
         SUCCESS = 0,
         TOO_MANY,
-        NO_CONVERTER
+        NO_CONVERTER,
+        UNKNOWN_KWARG,
+        DUPLICATE_ARG
     };
 
     CallableOverloadData(PyPtr const & args, PyPtr const & kwds, CallableOverloadBase const * overload);
