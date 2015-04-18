@@ -198,6 +198,26 @@ private:
     Target _value;
 };
 
+template <typename T, typename U, PyObject*(*Function)(U)>
+class NumberToPythonConverter : public MoveToPythonConverter {
+public:
+
+    static void declare(TypeRegistry & registry) {
+        registry.require(makeTypeInfo<T>())->setMoveToPython(
+            std::unique_ptr<MoveToPythonConverter>(new NumberToPythonConverter<T,U,Function>())
+        );
+    }
+
+    virtual PyPtr convert(void * v) const {
+        return PyPtr::steal(Function(*reinterpret_cast<T*>(v)));
+    }
+
+    virtual std::unique_ptr<MoveToPythonConverter> clone(TypeRegistry & registry) const {
+        return std::unique_ptr<MoveToPythonConverter>(new NumberToPythonConverter<T,U,Function>());
+    }
+
+};
+
 } // anonymous
 } // namespace mcpib
 
@@ -209,22 +229,49 @@ initnumbers(void) {
     Module module("numbers");
     TypeRegistry & registry = module.getRegistry();
     BoolFromPythonConverter::declare("mcpib.numbers.bool", registry);
+    NumberToPythonConverter<bool,long,&PyBool_FromLong>::declare(registry);
 #if CHAR_MIN < 0
     LongFromPythonConverter<char>::declare("mcpib.numbers.char", registry);
 #else
     UnsignedLongFromPythonConverter<char>::declare("mcpib.numbers.char", registry);
 #endif
+    NumberToPythonConverter<char,long,&PyInt_FromLong>::declare(registry);
     LongFromPythonConverter<signed char>::declare("mcpib.numbers.schar", registry);
+    NumberToPythonConverter<signed char,long,&PyInt_FromLong>::declare(registry);
     LongFromPythonConverter<short>::declare("mcpib.numbers.short", registry);
+    NumberToPythonConverter<short,long,&PyInt_FromLong>::declare(registry);
     LongFromPythonConverter<int>::declare("mcpib.numbers.int", registry);
+    NumberToPythonConverter<int,long,&PyInt_FromLong>::declare(registry);
     LongFromPythonConverter<long>::declare("mcpib.numbers.long", registry);
+    NumberToPythonConverter<long,long,&PyInt_FromLong>::declare(registry);
     LongFromPythonConverter<long long>::declare("mcpib.numbers.longlong", registry);
+    if (sizeof(long long) == sizeof(long)) {
+        // Python's int is always based on C++'s long, so if they're the same size, we can
+        // return a C++ long long as a Python int.
+        NumberToPythonConverter<long long,long,&PyInt_FromLong>::declare(registry);
+    } else {
+        NumberToPythonConverter<long long,long long,&PyLong_FromLongLong>::declare(registry);
+    }
     UnsignedLongFromPythonConverter<unsigned char>::declare("mcpib.numbers.uchar", registry);
+    NumberToPythonConverter<unsigned char,long,&PyInt_FromLong>::declare(registry);
     UnsignedLongFromPythonConverter<unsigned short>::declare("mcpib.numbers.ushort", registry);
+    NumberToPythonConverter<unsigned short,long,&PyInt_FromLong>::declare(registry);
     UnsignedLongFromPythonConverter<unsigned int>::declare("mcpib.numbers.uint", registry);
+    if (sizeof(int) == sizeof(long)) {
+        // Python's int is always based on C++'s long, so if they're the same size, we can't
+        // necessarily fit an unsigned int into a Python int, so we use Python long.
+        NumberToPythonConverter<unsigned int,unsigned long,&PyLong_FromUnsignedLong>::declare(registry);
+    } else {
+        NumberToPythonConverter<unsigned int,long,&PyInt_FromLong>::declare(registry);
+    }
     UnsignedLongFromPythonConverter<unsigned long>::declare("mcpib.numbers.ulong", registry);
+    NumberToPythonConverter<unsigned long,unsigned long,&PyLong_FromUnsignedLong>::declare(registry);
     UnsignedLongFromPythonConverter<unsigned long long>::declare("mcpib.numbers.ulonglong", registry);
+    NumberToPythonConverter<unsigned long long, unsigned long long, &PyLong_FromUnsignedLongLong>::declare(registry);
     FloatFromPythonConverter<float>::declare("mcpib.numbers.float", registry);
+    NumberToPythonConverter<float,double,&PyFloat_FromDouble>::declare(registry);
     FloatFromPythonConverter<double>::declare("mcpib.numbers.double", registry);
+    NumberToPythonConverter<double,double,&PyFloat_FromDouble>::declare(registry);
     FloatFromPythonConverter<long double>::declare("mcpib.numbers.longdouble", registry);
+    NumberToPythonConverter<long double,double,&PyFloat_FromDouble>::declare(registry);
 }

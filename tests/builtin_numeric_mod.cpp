@@ -12,10 +12,10 @@
 
 using namespace mcpib;
 
-#define ADD_ACCEPT_FUNC(name, type)                                     \
+#define ADD_FUNCS(name, type)                                     \
     module.add(                                                         \
-        Callable("accept_" name).addOverload(                           \
-            std::function<void(type)>([](type x) {}), {"x"}, module.getRegistry() \
+        Callable("passthru_" name).addOverload(                           \
+            std::function<type(type)>([](type x) { return x; }), {"x"}, module.getRegistry() \
         )                                                               \
     );                                                                  \
     module.add("bits_" name , PyPtr::steal(PyInt_FromLong(8*sizeof(type))))
@@ -28,18 +28,18 @@ initbuiltin_numeric_mod(void) {
         "char_is_signed",
         PyPtr::steal(PyBool_FromLong(static_cast<char>(-1) < 0))
     );
-    ADD_ACCEPT_FUNC("char", char);
-    ADD_ACCEPT_FUNC("signed_char", signed char);
-    ADD_ACCEPT_FUNC("unsigned_char", unsigned char);
-    ADD_ACCEPT_FUNC("short", short);
-    ADD_ACCEPT_FUNC("unsigned_short", unsigned short);
-    ADD_ACCEPT_FUNC("int", int);
-    ADD_ACCEPT_FUNC("unsigned_int", unsigned int);
-    ADD_ACCEPT_FUNC("long", long);
-    ADD_ACCEPT_FUNC("unsigned_long", unsigned long);
-    ADD_ACCEPT_FUNC("long_long", long long);
-    ADD_ACCEPT_FUNC("unsigned_long_long", unsigned long long);
-    ADD_ACCEPT_FUNC("float", float);
-    ADD_ACCEPT_FUNC("double", double);
-    ADD_ACCEPT_FUNC("long_double", long double);
+    ADD_FUNCS("char", char);
+    ADD_FUNCS("signed_char", signed char);
+    ADD_FUNCS("unsigned_char", unsigned char);
+    ADD_FUNCS("short", short);
+    ADD_FUNCS("unsigned_short", unsigned short);
+    ADD_FUNCS("int", int);
+    ADD_FUNCS("unsigned_int", unsigned int);
+    ADD_FUNCS("long", long);
+    ADD_FUNCS("unsigned_long", unsigned long);
+    ADD_FUNCS("long_long", long long);
+    ADD_FUNCS("unsigned_long_long", unsigned long long);
+    ADD_FUNCS("float", float);
+    ADD_FUNCS("double", double);
+    ADD_FUNCS("long_double", long double);
 }
