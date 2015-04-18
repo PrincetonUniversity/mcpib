@@ -12,10 +12,10 @@
 
 using namespace mcpib;
 
-#define ADD_FUNCS(name, type)                                     \
+#define ADD_FUNCS(name, type)                                           \
     module.add(                                                         \
-        Callable("passthru_" name).addOverload(                           \
-            std::function<type(type)>([](type x) { return x; }), {"x"}, module.getRegistry() \
+        Callable("passthru_" name).addOverload(                         \
+            [](type x) { return x; }, {"x"}, module.getRegistry()       \
         )                                                               \
     );                                                                  \
     module.add("bits_" name , PyPtr::steal(PyInt_FromLong(8*sizeof(type))))

@@ -26,13 +26,13 @@ public:
      */
     explicit Callable(PyPtr const & py);
 
-    template <typename Result, typename ...Args>
+    template <typename F>
     Callable & addOverload(
-        std::function<Result(Args...)> function,
+        F && function,
         std::initializer_list<std::string> names,
         TypeRegistry & registry
     ) {
-        _addOverload(makeCallableOverload(std::move(function), std::move(names), registry));
+        _addOverload(makeCallableOverload(std::forward<F>(function), std::move(names), registry));
         return *this;
     }
 

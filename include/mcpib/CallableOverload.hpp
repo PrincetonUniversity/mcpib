@@ -13,6 +13,7 @@
 #include "mcpib/TypeRegistry.hpp"
 #include "mcpib/metaprogramming.hpp"
 #include "mcpib/ToPythonTraits.hpp"
+#include "mcpib/GetSignature.hpp"
 
 #include <string>
 #include <memory>
@@ -186,6 +187,19 @@ std::unique_ptr<CallableOverloadBase> makeCallableOverload(
     ForEach<Args...>::apply(builder);
     return std::unique_ptr<CallableOverloadBase>(
         new CallableOverload<Result,Args...>(std::move(function), std::move(builder.arguments), registry)
+    );
+}
+
+template <typename F>
+std::unique_ptr<CallableOverloadBase> makeCallableOverload(
+    F && function,
+    std::initializer_list<std::string> names,
+    TypeRegistry & registry
+) {
+    return makeCallableOverload(
+        std::function<GetSignature<F>>(std::forward<F>(function)),
+        std::move(names),
+        registry
     );
 }
 
