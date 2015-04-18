@@ -6,3 +6,7 @@ Direct storage of function objects instead of std::function.
 
 Make it unnecessary (but still possible) to pass TypeRegistry
 to Callable::addOverload.
+
+Improve error messages in conversion failures (include type and function names).
+
+Test reference and pointer conversions (once we have class wrappers).
