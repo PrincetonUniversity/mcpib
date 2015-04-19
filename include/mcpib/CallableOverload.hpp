@@ -25,6 +25,7 @@ struct ArgumentData {
     explicit ArgumentData(std::string name_) : name(std::move(name_)) {}
 
     bool is_lvalue;
+    bool is_pointer;
     std::string name;
     std::shared_ptr<TypeRegistration> registration;
 };
@@ -40,6 +41,7 @@ public:
     template <int N, typename T>
     void apply() const {
         arguments[N].is_lvalue = FromPythonTraits<T>::is_lvalue;
+        arguments[N].is_pointer = FromPythonTraits<T>::is_pointer;
         arguments[N].registration = _registry->require(makeTypeInfo<T>());
     }
 

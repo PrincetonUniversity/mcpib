@@ -24,11 +24,14 @@ void TypeRegistration::registerFromPython(std::unique_ptr<FromPythonFactory> fac
 
 std::unique_ptr<FromPythonConverter> TypeRegistration::lookupFromPython(
     PyPtr const & p,
-    bool require_lvalue
+    bool is_lvalue,
+    bool is_pointer
 ) const {
     std::unique_ptr<FromPythonConverter> converter;
     for (auto iter = _from_python.rbegin(); iter != _from_python.rend(); ++iter) {
-        if (!require_lvalue || (**iter).is_lvalue) {
+        // If the type is an lvalue, we must have an lvalue converter.
+        // But if the converter is only for pointers, the type must be a pointer.
+        if ((!is_lvalue || (**iter).is_lvalue) && (is_pointer || !(**iter).is_pointer)) {
             converter = (**iter).apply(p);
             if (converter) break;
         }

@@ -56,7 +56,11 @@ CallableOverloadData::CallableOverloadData(
     for (Py_ssize_t index = 0; index < size; ++index) {
         PyPtr python_arg = PyPtr::borrow(PyTuple_GET_ITEM(args.get(), index));
         ArgumentData const & arg_data = _overload->_arguments[index];
-        _converters[index] = arg_data.registration->lookupFromPython(python_arg, arg_data.is_lvalue);
+        _converters[index] = arg_data.registration->lookupFromPython(
+            python_arg,
+            arg_data.is_lvalue,
+            arg_data.is_pointer
+        );
         if (!_converters[index]) {
             _error_state = NO_CONVERTER;
             _error_position = index;
@@ -82,7 +86,8 @@ CallableOverloadData::CallableOverloadData(
         ArgumentData const & arg_data = _overload->_arguments[index];
         _converters[index] = arg_data.registration->lookupFromPython(
             PyPtr::borrow(value),
-            arg_data.is_lvalue
+            arg_data.is_lvalue,
+            arg_data.is_pointer
         );
         if (!_converters[index]) {
             _error_state = NO_CONVERTER;

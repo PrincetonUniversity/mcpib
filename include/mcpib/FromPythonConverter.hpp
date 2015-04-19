@@ -89,7 +89,7 @@ public:
     std::string const name;
 
     /*
-     * Whether is converter is appropriate for lvalues.
+     * Whether this converter is appropriate for lvalues.
      *
      * C++ functions that take lvalue arguments (non-const references or pointers)
      * require lvalue conveters, which allow modifications to those arguments to be transferred
@@ -103,6 +103,15 @@ public:
      * return multiple values instead.
      */
     bool const is_lvalue;
+
+    /*
+     * Whether this converter only applies to pointers.
+     *
+     * C++ pointers can also be used to pass arrays, so converters that yield array-like
+     * pointer values should set is_pointer to true so they are not used to convert to
+     * non-pointer or value C++ types.
+     */
+    bool const is_pointer;
 
     /*
      * Return a copy of this converter appropriate for a different registry.
@@ -120,7 +129,9 @@ public:
     virtual ~FromPythonFactory() {}
 
 protected:
-    FromPythonFactory(std::string const & name_, bool is_lvalue_) : name(name_), is_lvalue(is_lvalue_) {}
+    FromPythonFactory(std::string const & name_, bool is_lvalue_, bool is_pointer_=false) :
+        name(name_), is_lvalue(is_lvalue_), is_pointer(is_pointer_)
+    {}
 };
 
 
@@ -128,6 +139,7 @@ template <typename T>
 class FromPythonTraits {
 public:
     static bool const is_lvalue = false;
+    static bool const is_pointer = false;
     static TypeInfo getTypeInfo() { return makeTypeInfo<T>(); }
     static T adapt(void * converted) { return *reinterpret_cast<T*>(converted); }
 };
@@ -136,6 +148,7 @@ template <typename U>
 class FromPythonTraits<U const> {
 public:
     static bool const is_lvalue = false;
+    static bool const is_pointer = false;
     static TypeInfo getTypeInfo() { return makeTypeInfo<U>(); }
     static U const adapt(void * converted) { return *reinterpret_cast<U const *>(converted); }
 };
@@ -144,6 +157,7 @@ template <typename U>
 class FromPythonTraits<U *> {
 public:
     static bool const is_lvalue = true;
+    static bool const is_pointer = true;
     static TypeInfo getTypeInfo() { return makeTypeInfo<U>(); }
     static U * adapt(void * converted) { return reinterpret_cast<U *>(converted); }
 };
@@ -152,6 +166,7 @@ template <typename U>
 class FromPythonTraits<U &> {
 public:
     static bool const is_lvalue = true;
+    static bool const is_pointer = false;
     static TypeInfo getTypeInfo() { return makeTypeInfo<U>(); }
     static U & adapt(void * converted) { return *reinterpret_cast<U *>(converted); }
 };
@@ -160,6 +175,7 @@ template <typename U>
 class FromPythonTraits<U const *> {
 public:
     static bool const is_lvalue = false;
+    static bool const is_pointer = true;
     static TypeInfo getTypeInfo() { return makeTypeInfo<U>(); }
     static U const * adapt(void * converted) { return reinterpret_cast<U const *>(converted); }
 };
@@ -168,6 +184,7 @@ template <typename U>
 class FromPythonTraits<U const &> {
 public:
     static bool const is_lvalue = false;
+    static bool const is_pointer = false;
     static TypeInfo getTypeInfo() { return makeTypeInfo<U>(); }
     static U const & adapt(void * converted) { return *reinterpret_cast<U const *>(converted); }
 };

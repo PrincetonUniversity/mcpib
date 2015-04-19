@@ -20,7 +20,12 @@ namespace mcpib { namespace detail {
 class FromPythonImpl {
 public:
 
-    FromPythonImpl(PyPtr const & p, bool is_lvalue, std::shared_ptr<TypeRegistration> registration);
+    FromPythonImpl(
+        PyPtr const & p,
+        bool is_lvalue,
+        bool is_pointer,
+        std::shared_ptr<TypeRegistration> registration
+    );
 
     void require();
 

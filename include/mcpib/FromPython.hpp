@@ -40,7 +40,7 @@ public:
      *  object will be returned, which can be tested by casting to bool.
      */
     FromPython(PyPtr const & p, std::shared_ptr<TypeRegistration> registration) :
-        _impl(p, FromPythonTraits<T>::is_lvalue, registration)
+        _impl(p, FromPythonTraits<T>::is_lvalue, FromPythonTraits<T>::is_pointer, registration)
     {}
 
     /*

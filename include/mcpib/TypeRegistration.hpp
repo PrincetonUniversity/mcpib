@@ -39,7 +39,11 @@ public:
      *
      * Returns a null pointer if no match could be found.
      */
-    std::unique_ptr<FromPythonConverter> lookupFromPython(PyPtr const & p, bool require_lvalue) const;
+    std::unique_ptr<FromPythonConverter> lookupFromPython(
+        PyPtr const & p,
+        bool is_lvalue,
+        bool is_pointer
+    ) const;
 
     // Set the converter for by-value and rvalue reference returns.
     void setMoveToPython(std::unique_ptr<MoveToPythonConverter> converter);

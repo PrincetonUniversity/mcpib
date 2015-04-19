@@ -15,9 +15,10 @@ namespace mcpib { namespace detail {
 FromPythonImpl::FromPythonImpl(
     PyPtr const & p,
     bool is_lvalue,
+    bool is_pointer,
     std::shared_ptr<TypeRegistration> registration
 ) :
-    converter(registration ? registration->lookupFromPython(p, is_lvalue) : nullptr)
+    converter(registration ? registration->lookupFromPython(p, is_lvalue, is_pointer) : nullptr)
 {}
 
 void FromPythonImpl::require() {
