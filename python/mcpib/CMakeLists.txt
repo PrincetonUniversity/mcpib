@@ -7,3 +7,6 @@ target_link_libraries(_mcpib mcpib)
 
 python_add_module(numbers numbers.cpp)
 target_link_libraries(numbers mcpib)
+
+python_add_module(strings strings.cpp)
+target_link_libraries(strings mcpib)
