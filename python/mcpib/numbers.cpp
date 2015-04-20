@@ -230,12 +230,6 @@ initnumbers(void) {
     TypeRegistry & registry = module.getRegistry();
     BoolFromPythonConverter::declare("mcpib.numbers.bool", registry);
     NumberToPythonConverter<bool,long,&PyBool_FromLong>::declare(registry);
-#if CHAR_MIN < 0
-    LongFromPythonConverter<char>::declare("mcpib.numbers.char", registry);
-#else
-    UnsignedLongFromPythonConverter<char>::declare("mcpib.numbers.char", registry);
-#endif
-    NumberToPythonConverter<char,long,&PyInt_FromLong>::declare(registry);
     LongFromPythonConverter<signed char>::declare("mcpib.numbers.schar", registry);
     NumberToPythonConverter<signed char,long,&PyInt_FromLong>::declare(registry);
     LongFromPythonConverter<short>::declare("mcpib.numbers.short", registry);

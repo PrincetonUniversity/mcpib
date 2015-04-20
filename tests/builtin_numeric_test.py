@@ -29,15 +29,11 @@ class BuiltinNumericTestCase(unittest.TestCase):
         self.assertRaises(mcpib.FromPythonError, func, "5")
 
     def testIntegers(self):
-        if mod.char_is_signed:
-            self.checkInteger(mod.passthru_char, -2**(mod.bits_char - 1), 2**(mod.bits_char - 1) - 1, "char")
-        else:
-            self.checkInteger(mod.passthru_char, 0, 2**bits + 1, "char")
-        self.assertEqual(type(mod.passthru_char(5)), int)
-        self.checkInteger(mod.passthru_signed_char, -2**(mod.bits_char - 1), 2**(mod.bits_char - 1) - 1,
-                          name="sgigned char")
+        self.checkInteger(mod.passthru_signed_char, -2**(mod.bits_signed_char - 1),
+                          2**(mod.bits_signed_char - 1) - 1,
+                          name="signed char")
         self.assertEqual(type(mod.passthru_signed_char(5)), int)
-        self.checkInteger(mod.passthru_unsigned_char, 0, 2**mod.bits_char - 1,
+        self.checkInteger(mod.passthru_unsigned_char, 0, 2**mod.bits_unsigned_char - 1,
                           name="unsigned char")
         self.assertEqual(type(mod.passthru_unsigned_char(5)), int)
         for t in ("int", "short", "long", "long_long"):
