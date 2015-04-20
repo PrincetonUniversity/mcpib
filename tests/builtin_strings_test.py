@@ -34,10 +34,15 @@ class BuiltinStringsTestCase(unittest.TestCase):
     def testCharArgs(self):
         """Test that c-string converters are not used for char values, references, or non-const pointers."""
         self.assertRaises(mcpib.FromPythonError, mod.accept_char, "foo")
-        self.assertRaises(mcpib.FromPythonError, mod.accept_char_ptr, "foo")
         self.assertRaises(mcpib.FromPythonError, mod.accept_char_const, "foo")
+        self.assertRaises(mcpib.FromPythonError, mod.accept_char_ptr, "foo")
         self.assertRaises(mcpib.FromPythonError, mod.accept_char_ref, "foo")
         self.assertRaises(mcpib.FromPythonError, mod.accept_char_const_ref, "foo")
+        self.assertRaises(mcpib.ToPythonError, mod.return_char)
+        self.assertRaises(mcpib.ToPythonError, mod.return_char_const)
+        self.assertRaises(mcpib.ToPythonError, mod.return_char_ptr)
+        self.assertRaises(mcpib.ToPythonError, mod.return_char_ref)
+        self.assertRaises(mcpib.ToPythonError, mod.return_char_const_ref)
 
 if __name__ == "__main__":
     unittest.main()

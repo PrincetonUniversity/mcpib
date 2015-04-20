@@ -16,7 +16,6 @@ PyMODINIT_FUNC
 initbuiltin_strings_mod(void) {
     Module module("builtin_strings_mod", "unit tests for string converters");
     module.import("mcpib.strings");
-    //module.import("mcpib.numbers");
 
     module.add(
         Callable("passthru_string")
@@ -50,25 +49,25 @@ initbuiltin_strings_mod(void) {
 
     module.add(
         Callable("return_char")
-            .addOverload([]()->char { return 'A'; }, {"s"}, module.getRegistry())
+            .addOverload([]()->char { return 25; }, {}, module.getRegistry())
     );
     module.add(
         Callable("return_char_const")
-            .addOverload([]()->char const { return 'A'; }, {"s"}, module.getRegistry())
+            .addOverload([]()->char const { return 25; }, {}, module.getRegistry())
     );
     module.add(
-        Callable("accept_char_ptr")
-            .addOverload([](char * s)->char * { static char v = 'A'; return &v; }, {"s"},
+        Callable("return_char_ptr")
+            .addOverload([]()->char * { static char v = 25; return &v; }, {},
                          module.getRegistry())
     );
     module.add(
-        Callable("accept_char_ref")
-            .addOverload([](char & s)->char & { static char v = 'A'; return v; }, {"s"},
+        Callable("return_char_ref")
+            .addOverload([]()->char & { static char v = 25; return v; }, {},
                          module.getRegistry())
     );
     module.add(
-        Callable("accept_char_const_ref")
-            .addOverload([](char const & s)->char const & { static char v = 'A'; return v; }, {"s"},
+        Callable("return_char_const_ref")
+            .addOverload([]()->char const & { static char v = 25; return v; }, {},
                          module.getRegistry())
     );
 }
