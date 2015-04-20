@@ -199,12 +199,12 @@ private:
 };
 
 template <typename T, typename U, PyObject*(*Function)(U)>
-class NumberToPythonConverter : public MoveToPythonConverter {
+class NumberToPythonConverter : public ToPythonConverter {
 public:
 
     static void declare(TypeRegistry & registry) {
-        registry.require(makeTypeInfo<T>())->setMoveToPython(
-            std::unique_ptr<MoveToPythonConverter>(new NumberToPythonConverter<T,U,Function>())
+        registry.require(makeTypeInfo<T>())->setValueToPython(
+            std::unique_ptr<ToPythonConverter>(new NumberToPythonConverter<T,U,Function>())
         );
     }
 
@@ -212,8 +212,8 @@ public:
         return PyPtr::steal(Function(*reinterpret_cast<T*>(v)));
     }
 
-    virtual std::unique_ptr<MoveToPythonConverter> clone(TypeRegistry & registry) const {
-        return std::unique_ptr<MoveToPythonConverter>(new NumberToPythonConverter<T,U,Function>());
+    virtual std::unique_ptr<ToPythonConverter> clone(TypeRegistry & registry) const {
+        return std::unique_ptr<ToPythonConverter>(new NumberToPythonConverter<T,U,Function>());
     }
 
 };

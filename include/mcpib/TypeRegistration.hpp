@@ -46,17 +46,37 @@ public:
     ) const;
 
     // Set the converter for by-value and rvalue reference returns.
-    void setMoveToPython(std::unique_ptr<MoveToPythonConverter> converter);
+    void setValueToPython(std::unique_ptr<ToPythonConverter> converter);
 
-    // Set the converter for reference and pointer conversions to Python.
-    void setRefToPython(std::unique_ptr<RefToPythonConverter> converter);
+    // Set the converter for reference (and possibly pointer) conversions to Python.
+    void setRefToPython(std::unique_ptr<ToPythonConverter> converter);
 
-    // Set the converter for const reference and pointer conversions to Python.
-    void setConstRefToPython(std::unique_ptr<ConstRefToPythonConverter> converter);
+    // Set the converter for const reference (and possibly pointer) conversions to Python.
+    void setConstRefToPython(std::unique_ptr<ToPythonConverter> converter);
+
+    // Set the converter for pointer conversions (if different from reference) to Python.
+    void setPointerToPython(std::unique_ptr<ToPythonConverter> converter);
+
+    // Set the converter for const pointer conversions (if different from const reference) to Python.
+    void setConstPointerToPython(std::unique_ptr<ToPythonConverter> converter);
+
+    // Return a to-Python converter appropriate for rvalues.
+    ToPythonConverter const & getValueToPython() const;
+
+    // Return a to-Python converter appropriate for references.
+    ToPythonConverter const & getRefToPython() const;
+
+    // Return a to-Python converter appropriate for const references.
+    ToPythonConverter const & getConstRefToPython() const;
+
+    // Return a to-Python converter appropriate for pointers.
+    ToPythonConverter const & getPointerToPython() const;
+
+    // Return a to-Python converter appropriate for const pointers.
+    ToPythonConverter const & getConstPointerToPython() const;
 
     /*
      * Convert a C++ object that matches the TypeRegistration's type to Python.
-     * Convert a C++ object to Python.
      *
      * This function is defined in ToPythonTraits.hpp.
      */
@@ -67,22 +87,11 @@ private:
 
     friend class TypeRegistry;
 
-    template <typename T> friend class ToPythonTraits;
-
     // Copy all state into another TypeRegistration, inserting converters and creating derived-class
     // TypeRegistrations as necessary in the given registry.
     // New derived-class TypeRegistrations will only be created (via TypeRegistry::require()); they
     // will not be copied themselves.
     void _copyInto(TypeRegistration & other, TypeRegistry & registry) const;
-
-    // Throw an appropriate exception if there is no MoveToPythonConverter.
-    void _requireMoveToPython() const;
-
-    // Throw an appropriate exception if there is no RefToPythonConverter.
-    void _requireRefToPython() const;
-
-    // Throw an appropriate exception if there is no ConstRefToPythonConverter.
-    void _requireConstRefToPython() const;
 
     /*
      * Sequence of from-python converter factories, along with a bool indicating whether
@@ -94,13 +103,19 @@ private:
     FromPythonList _from_python;
 
     // To-Python converter for by-value and rvalue reference returns.
-    std::unique_ptr<MoveToPythonConverter> _move_to_python;
+    std::unique_ptr<ToPythonConverter> _value_to_python;
 
     // To-Python converter for non-const reference and pointer returns.
-    std::unique_ptr<RefToPythonConverter> _ref_to_python;
+    std::unique_ptr<ToPythonConverter> _ref_to_python;
 
-    // To-Python converter for const reference and const xpointer returns.
-    std::unique_ptr<ConstRefToPythonConverter> _const_ref_to_python;
+    // To-Python converter for const reference returns.
+    std::unique_ptr<ToPythonConverter> _const_ref_to_python;
+
+    // To-Python converter for non-const pointer returns (if null, _ref_to_python is used).
+    std::unique_ptr<ToPythonConverter> _pointer_to_python;
+
+    // To-Python converter for const pointer returns (if null, _const_ref_to_python is used).
+    std::unique_ptr<ToPythonConverter> _const_pointer_to_python;
 
     /*
      * A map of TypeRegistrations for all classes that inherit from this one.

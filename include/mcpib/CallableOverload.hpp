@@ -42,7 +42,7 @@ public:
     void apply() const {
         arguments[N].is_lvalue = FromPythonTraits<T>::is_lvalue;
         arguments[N].is_pointer = FromPythonTraits<T>::is_pointer;
-        arguments[N].registration = _registry->require(makeTypeInfo<T>());
+        arguments[N].registration = _registry->require(FromPythonTraits<T>::getTypeInfo());
     }
 
     mutable ArgumentDataVector arguments;

@@ -39,49 +39,82 @@ std::unique_ptr<FromPythonConverter> TypeRegistration::lookupFromPython(
     return converter;
 }
 
-void TypeRegistration::setMoveToPython(std::unique_ptr<MoveToPythonConverter> converter) {
-    _move_to_python = std::move(converter);
+void TypeRegistration::setValueToPython(std::unique_ptr<ToPythonConverter> converter) {
+    _value_to_python = std::move(converter);
 }
 
-void TypeRegistration::setRefToPython(std::unique_ptr<RefToPythonConverter> converter) {
+void TypeRegistration::setRefToPython(std::unique_ptr<ToPythonConverter> converter) {
     _ref_to_python = std::move(converter);
 }
 
-void TypeRegistration::setConstRefToPython(std::unique_ptr<ConstRefToPythonConverter> converter) {
+void TypeRegistration::setConstRefToPython(std::unique_ptr<ToPythonConverter> converter) {
     _const_ref_to_python = std::move(converter);
+}
+
+void TypeRegistration::setPointerToPython(std::unique_ptr<ToPythonConverter> converter) {
+    _pointer_to_python = std::move(converter);
+}
+
+void TypeRegistration::setConstPointerToPython(std::unique_ptr<ToPythonConverter> converter) {
+    _const_pointer_to_python = std::move(converter);
 }
 
 void TypeRegistration::_copyInto(TypeRegistration & other, TypeRegistry & registry) const {
     for (auto const & other_conv : _from_python) {
         other.registerFromPython(other_conv->clone(registry));
     }
-    if (_move_to_python) other.setMoveToPython(_move_to_python->clone(registry));
+    if (_value_to_python) other.setValueToPython(_value_to_python->clone(registry));
     if (_ref_to_python) other.setRefToPython(_ref_to_python->clone(registry));
     if (_const_ref_to_python) other.setConstRefToPython(_const_ref_to_python->clone(registry));
+    if (_pointer_to_python) other.setPointerToPython(_pointer_to_python->clone(registry));
+    if (_const_pointer_to_python) other.setConstPointerToPython(_const_pointer_to_python->clone(registry));
     for (auto const & pair : _derived) {
         other._derived[pair.first] = registry.require(pair.first);
     }
 }
 
-void TypeRegistration::_requireMoveToPython() const {
-    if (!_move_to_python) {
+ToPythonConverter const & TypeRegistration::getValueToPython() const {
+    if (!_value_to_python) {
         // TODO: include type string
         throw raiseToPythonError("No move/copy to-Python converter found");
     }
+    return *_value_to_python;
 }
 
-void TypeRegistration::_requireRefToPython() const {
+ToPythonConverter const & TypeRegistration::getRefToPython() const {
     if (!_ref_to_python) {
         // TODO: include type string
-        throw raiseToPythonError("No reference/pointer to-Python converter found");
+        throw raiseToPythonError("No reference to-Python converter found");
     }
+    return *_ref_to_python;
 }
 
-void TypeRegistration::_requireConstRefToPython() const {
+ToPythonConverter const & TypeRegistration::getConstRefToPython() const {
     if (!_const_ref_to_python) {
         // TODO: include type string
-        throw raiseToPythonError("No const reference/pointer to-Python converter found");
+        throw raiseToPythonError("No const reference to-Python converter found");
     }
+    return *_const_ref_to_python;
+}
+
+ToPythonConverter const & TypeRegistration::getPointerToPython() const {
+    if (_pointer_to_python) {
+        return *_pointer_to_python;
+    } else if (_ref_to_python) {
+        return *_ref_to_python;
+    }
+    // TODO: include type string
+    throw raiseToPythonError("No pointer to-Python converter found");
+}
+
+ToPythonConverter const & TypeRegistration::getConstPointerToPython() const {
+    if (_const_pointer_to_python) {
+        return *_const_pointer_to_python;
+    } else if (_const_ref_to_python) {
+        return *_const_ref_to_python;
+    }
+    // TODO: include type string
+    throw raiseToPythonError("No const pointer to-Python converter found");
 }
 
 } // namespace mcpib

@@ -66,7 +66,7 @@ private:
     PyPtr _p;
 };
 
-class StringToPythonConverter : public MoveToPythonConverter {
+class StringToPythonConverter : public ToPythonConverter {
 public:
 
     virtual PyPtr convert(void * v) const {
@@ -74,13 +74,13 @@ public:
         return PyPtr::steal(PyString_FromStringAndSize(s->data(), s->size()));
     }
 
-    virtual std::unique_ptr<MoveToPythonConverter> clone(TypeRegistry & registry) const {
-        return std::unique_ptr<MoveToPythonConverter>(new StringToPythonConverter());
+    virtual std::unique_ptr<ToPythonConverter> clone(TypeRegistry & registry) const {
+        return std::unique_ptr<ToPythonConverter>(new StringToPythonConverter());
     }
 
 };
 
-class CStringToPythonConverter : public MoveToPythonConverter {
+class CStringToPythonConverter : public ToPythonConverter {
 public:
 
     virtual PyPtr convert(void * v) const {
@@ -88,8 +88,8 @@ public:
         return PyPtr::steal(PyString_FromString(s));
     }
 
-    virtual std::unique_ptr<MoveToPythonConverter> clone(TypeRegistry & registry) const {
-        return std::unique_ptr<MoveToPythonConverter>(new CStringToPythonConverter());
+    virtual std::unique_ptr<ToPythonConverter> clone(TypeRegistry & registry) const {
+        return std::unique_ptr<ToPythonConverter>(new CStringToPythonConverter());
     }
 
 };
@@ -104,24 +104,24 @@ initstrings(void) {
     Module module("strings");
     TypeRegistry & registry = module.getRegistry();
 
-    std::shared_ptr<Registration> string_reg = registry.require(makeTypeInfo<std::string>());
+    std::shared_ptr<TypeRegistration> string_reg = registry.require(makeTypeInfo<std::string>());
     string_reg->registerFromPython(
         std::unique_ptr<FromPythonFactory>(
             new StringFromPythonFactory<StringFromPythonConverter>("mcpib.strings.string", false)
         )
     );
-    string_reg->setMoveToPython(
-        std::unique_ptr<MoveToPythonConverter>(new StringToPythonConverter())
+    string_reg->setValueToPython(
+        std::unique_ptr<ToPythonConverter>(new StringToPythonConverter())
     );
 
-    std::shared_ptr<Registration> cstring_reg = registry.require(makeTypeInfo<char>());
+    std::shared_ptr<TypeRegistration> cstring_reg = registry.require(makeTypeInfo<char>());
     cstring_reg->registerFromPython(
         std::unique_ptr<FromPythonFactory>(
             new StringFromPythonFactory<CStringFromPythonConverter>("mcpib.strings.cstring", true)
         )
     );
-    cstring_reg->setConstRefToPython(
-        std::unique_ptr<MoveToPythonConverter>(new CStringToPythonConverter())
+    cstring_reg->setConstPointerToPython(
+        std::unique_ptr<ToPythonConverter>(new CStringToPythonConverter())
     );
 
 }

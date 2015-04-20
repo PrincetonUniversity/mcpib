@@ -24,8 +24,7 @@ public:
     static TypeInfo getTypeInfo() { return makeTypeInfo<T>(); }
 
     static PyPtr convert(TypeRegistration const & registration, T v) {
-        registration._requireMoveToPython();
-        return registration._move_to_python->convert(&v);
+        return registration.getValueToPython().convert(&v);
     }
 
 };
@@ -37,8 +36,7 @@ public:
     static TypeInfo getTypeInfo() { return makeTypeInfo<U>(); }
 
     static PyPtr convert(TypeRegistration const & registration, U v) {
-        registration._requireMoveToPython();
-        return registration._move_to_python->convert(&v);
+        return registration.getValueToPython().convert(&v);
     }
 
 };
@@ -50,8 +48,7 @@ public:
     static TypeInfo getTypeInfo() { return makeTypeInfo<U>(); }
 
     static PyPtr convert(TypeRegistration const & registration, U * v) {
-        registration._requireRefToPython();
-        return registration._ref_to_python->convert(v);
+        return registration.getPointerToPython().convert(v);
     }
 
 };
@@ -63,8 +60,7 @@ public:
     static TypeInfo getTypeInfo() { return makeTypeInfo<U>(); }
 
     static PyPtr convert(TypeRegistration const & registration, U & v) {
-        registration._requireRefToPython();
-        return registration._ref_to_python->convert(&v);
+        return registration.getRefToPython().convert(&v);
     }
 
 };
@@ -76,8 +72,7 @@ public:
     static TypeInfo getTypeInfo() { return makeTypeInfo<U>(); }
 
     static PyPtr convert(TypeRegistration const & registration, U const * v) {
-        registration._requireConstRefToPython();
-        return registration._const_ref_to_python->convert(v);
+        return registration.getConstPointerToPython().convert(const_cast<U*>(v));
     }
 
 };
@@ -89,8 +84,7 @@ public:
     static TypeInfo getTypeInfo() { return makeTypeInfo<U>(); }
 
     static PyPtr convert(TypeRegistration const & registration, U const & v) {
-        registration._requireConstRefToPython();
-        return registration._const_ref_to_python->convert(&v);
+        return registration.getConstRefToPython().convert(const_cast<U*>(&v));
     }
 
 };
@@ -102,8 +96,7 @@ public:
     static TypeInfo getTypeInfo() { return makeTypeInfo<U>(); }
 
     static PyPtr convert(TypeRegistration const & registration, U && v) {
-        registration._requireMoveToPython();
-        return registration._move_to_python->convert(std::move(v));
+        return registration.getValueToPython().convert(std::move(v));
     }
 
 };
