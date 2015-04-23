@@ -18,6 +18,46 @@ using namespace mcpib;
             [](type x) { return x; }, {"x"}, module.getRegistry()       \
         )                                                               \
     );                                                                  \
+    module.add(                                                         \
+        Callable("accept_" name "_cref").addOverload(                   \
+            [](type const & x) { return; }, {"x"}, module.getRegistry() \
+        )                                                               \
+    );                                                                  \
+    module.add(                                                         \
+        Callable("accept_" name "_ref").addOverload(                    \
+            [](type & x) { return; }, {"x"}, module.getRegistry()       \
+        )                                                               \
+    );                                                                  \
+    module.add(                                                         \
+        Callable("accept_" name "_cptr").addOverload(                   \
+            [](type const * x) { return; }, {"x"}, module.getRegistry() \
+        )                                                               \
+    );                                                                  \
+    module.add(                                                         \
+        Callable("accept_" name "_ptr").addOverload(                    \
+            [](type * x) { return; }, {"x"}, module.getRegistry()       \
+        )                                                               \
+    );                                                                  \
+    module.add(                                                         \
+        Callable("return_" name "_cref").addOverload(                   \
+            []()->type const & { static type const x = 0; return x; }, {}, module.getRegistry() \
+        )                                                               \
+    );                                                                  \
+    module.add(                                                         \
+        Callable("return_" name "_ref").addOverload(                    \
+            []()->type & { static type x = 0; return x; }, {}, module.getRegistry() \
+        )                                                               \
+    );                                                                  \
+    module.add(                                                         \
+        Callable("return_" name "_cptr").addOverload(                   \
+            []()->type const * { static type const x = 0; return &x; }, {}, module.getRegistry() \
+        )                                                               \
+    );                                                                  \
+    module.add(                                                         \
+        Callable("return_" name "_ptr").addOverload(                    \
+            []()->type * { static type x = 0; return &x; }, {}, module.getRegistry() \
+        )                                                               \
+    );                                                                  \
     module.add("bits_" name , PyPtr::steal(PyInt_FromLong(8*sizeof(type))))
 
 PyMODINIT_FUNC

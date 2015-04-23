@@ -19,7 +19,27 @@ import builtin_numeric_mod as mod
 
 class BuiltinNumericTestCase(unittest.TestCase):
 
-    def checkInteger(self, func, minimum, maximum, name):
+    def checkModifiedTypes(self, name, value):
+        """Test pointer and references to numeric types.
+
+        Const pointers and references should both be converted from Python to C++, while
+        non-const pointers and references should not (because those imply that the function
+        may modify them, which we can't support in Python).
+
+        No pointers or references should be converted from C++ to Python, since we don't know
+        how the user would want us to manage their lifetimes.
+        """
+        self.assertRaises(mcpib.FromPythonError, getattr(mod, "accept_%s_ref" % name), value)
+        self.assertEqual(getattr(mod, "accept_%s_cref" % name)(value), None)
+        self.assertRaises(mcpib.FromPythonError, getattr(mod, "accept_%s_ptr" % name), value)
+        self.assertEqual(getattr(mod, "accept_%s_cptr" % name)(value), None)
+        self.assertRaises(mcpib.ToPythonError, getattr(mod, "return_%s_ref" % name))
+        self.assertRaises(mcpib.ToPythonError, getattr(mod, "return_%s_cref" % name))
+        self.assertRaises(mcpib.ToPythonError, getattr(mod, "return_%s_ptr" % name))
+        self.assertRaises(mcpib.ToPythonError, getattr(mod, "return_%s_cptr" % name))
+
+    def checkInteger(self, minimum, maximum, name):
+        func = getattr(mod, "passthru_%s" % name)
         self.assertEqual(func(int(5)), 5)
         self.assertEqual(func(True), True)
         self.assertEqual(func(long(minimum)), long(minimum))
@@ -27,21 +47,20 @@ class BuiltinNumericTestCase(unittest.TestCase):
         self.assertRaises(OverflowError, func, maximum + 1)
         self.assertRaises(OverflowError, func, minimum - 1)
         self.assertRaises(mcpib.FromPythonError, func, "5")
+        self.checkModifiedTypes(name, 4)
 
     def testIntegers(self):
-        self.checkInteger(mod.passthru_signed_char, -2**(mod.bits_signed_char - 1),
-                          2**(mod.bits_signed_char - 1) - 1,
-                          name="signed char")
+        self.checkInteger(-2**(mod.bits_signed_char - 1), 2**(mod.bits_signed_char - 1) - 1,
+                           name="signed_char")
         self.assertEqual(type(mod.passthru_signed_char(5)), int)
-        self.checkInteger(mod.passthru_unsigned_char, 0, 2**mod.bits_unsigned_char - 1,
-                          name="unsigned char")
+        self.checkInteger(0, 2**mod.bits_unsigned_char - 1, name="unsigned_char")
         self.assertEqual(type(mod.passthru_unsigned_char(5)), int)
         for t in ("int", "short", "long", "long_long"):
             bits = getattr(mod, "bits_%s" % t)
+            self.checkInteger(-2**(bits - 1), 2**(bits - 1) - 1, t)
+            self.checkInteger(0, 2**bits - 1, "unsigned_%s" % t)
             passthru_signed = getattr(mod, "passthru_%s" % t)
             passthru_unsigned = getattr(mod, "passthru_unsigned_%s" % t)
-            self.checkInteger(passthru_signed, -2**(bits - 1), 2**(bits - 1) - 1, t)
-            self.checkInteger(passthru_unsigned, 0, 2**bits - 1, "unsigned %s" % t)
             if bits < mod.bits_long:
                 self.assertEqual(type(passthru_signed(5)), int)
                 self.assertEqual(type(passthru_unsigned(5)), int)
@@ -52,15 +71,17 @@ class BuiltinNumericTestCase(unittest.TestCase):
                 self.assertEqual(type(passthru_signed(5)), int)
                 self.assertEqual(type(passthru_unsigned(5)), long)
 
-    def checkFloat(self, func, name):
+    def checkFloat(self, name):
+        func = getattr(mod, "passthru_%s" % name)
         self.assertEqual(func(2.5), 2.5)
         self.assertEqual(func(1.0), 1.0)
         self.assertEqual(func(True), 1.0)
         self.assertRaises(mcpib.FromPythonError, func, "5")
+        self.checkModifiedTypes(name, 1.5)
 
     def testFloats(self):
-        for t in ("float", "double", "long_double"):
-            self.checkFloat(getattr(mod, "passthru_%s" % t), t)
+        for name in ("float", "double", "long_double"):
+            self.checkFloat(name)
 
 
 if __name__ == "__main__":
