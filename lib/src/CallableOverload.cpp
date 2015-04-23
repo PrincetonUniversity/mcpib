@@ -45,15 +45,16 @@ CallableOverloadData::CallableOverloadData(
     _error_state(SUCCESS),
     _error_position(-1),
     _error_string(),
-    _converters(PyTuple_Size(args.get())),
+    _converters(overload->_arguments.size()),
     _overload(overload)
 {
-    if (_converters.size() > _overload->_arguments.size()) {
+    Py_ssize_t positional_size = PyTuple_Size(args.get());
+    if (positional_size > _overload->_arguments.size()) {
         _error_state = TOO_MANY;
+        _error_position = positional_size;
         return;
     }
-    Py_ssize_t size = _converters.size();
-    for (Py_ssize_t index = 0; index < size; ++index) {
+    for (Py_ssize_t index = 0; index < positional_size; ++index) {
         PyPtr python_arg = PyPtr::borrow(PyTuple_GET_ITEM(args.get(), index));
         ArgumentData const & arg_data = _overload->_arguments[index];
         _converters[index] = arg_data.registration->lookupFromPython(
@@ -67,30 +68,39 @@ CallableOverloadData::CallableOverloadData(
             return;
         }
     }
-    if (!kwds) return;
-    PyObject * key = nullptr;
-    PyObject * value = nullptr;
-    Py_ssize_t kwd_index = 0;
-    while (PyDict_Next(kwds.get(), &kwd_index, &key, &value)) {
-        char const * name = PyString_AS_STRING(key);
-        Py_ssize_t index = findArgument(_overload->_arguments, name);
-        if (index < 0) {
-            _error_state = UNKNOWN_KWARG;
-            _error_string = name;
-            return;
+    if (kwds) {
+        PyObject * key = nullptr;
+        PyObject * value = nullptr;
+        Py_ssize_t kwd_index = 0;
+        while (PyDict_Next(kwds.get(), &kwd_index, &key, &value)) {
+            char const * name = PyString_AS_STRING(key);
+            Py_ssize_t index = findArgument(_overload->_arguments, name);
+            if (index < 0) {
+                _error_state = UNKNOWN_KWARG;
+                _error_string = name;
+                return;
+            }
+            if (_converters[index]) {
+                _error_state = DUPLICATE_ARG;
+                _error_position = index;
+                return;
+            }
+            ArgumentData const & arg_data = _overload->_arguments[index];
+            _converters[index] = arg_data.registration->lookupFromPython(
+                PyPtr::borrow(value),
+                arg_data.is_lvalue,
+                arg_data.is_pointer
+            );
+            if (!_converters[index]) {
+                _error_state = NO_CONVERTER;
+                _error_position = index;
+                return;
+            }
         }
-        if (_converters[index]) {
-            _error_state = DUPLICATE_ARG;
-            _error_position = index;
-        }
-        ArgumentData const & arg_data = _overload->_arguments[index];
-        _converters[index] = arg_data.registration->lookupFromPython(
-            PyPtr::borrow(value),
-            arg_data.is_lvalue,
-            arg_data.is_pointer
-        );
+    }
+    for (std::size_t index = 0; index < _converters.size(); ++index) {
         if (!_converters[index]) {
-            _error_state = NO_CONVERTER;
+            _error_state = MISSING_ARG;
             _error_position = index;
             return;
         }
@@ -101,7 +111,7 @@ PyPtr CallableOverloadData::raiseException(std::string const & function_name) co
     if (_error_state == TOO_MANY) {
         return raiseSignatureError(
             fmt::format("Too many arguments ({}) to function '{}' (expects at most {})",
-                        _converters.size(), function_name, _overload->_arguments.size())
+                        _error_position, function_name, _overload->_arguments.size())
         ).restore();
     } else if (_error_state == NO_CONVERTER) {
         ArgumentData const & arg_data = _overload->_arguments[_error_position];

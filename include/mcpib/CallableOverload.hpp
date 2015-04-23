@@ -76,7 +76,8 @@ public:
         TOO_MANY,
         NO_CONVERTER,
         UNKNOWN_KWARG,
-        DUPLICATE_ARG
+        DUPLICATE_ARG,
+        MISSING_ARG
     };
 
     CallableOverloadData(PyPtr const & args, PyPtr const & kwds, CallableOverloadBase const * overload);
