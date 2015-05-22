@@ -92,12 +92,12 @@ public:
      * Whether this converter is appropriate for lvalues.
      *
      * C++ functions that take lvalue arguments (non-const references or pointers)
-     * require lvalue conveters, which allow modifications to those arguments to be transferred
+     * require lvalue converters, which allow modifications to those arguments to be transferred
      * back to Python.  This can reflect either a converter that extracts a C++ object from
      * a Python object that holds it, hence truly modifying it in place, or a converter
      * that uses the postcall() method to copy temporary state back to a Python object.
      *
-     * Note that some common Python types, including strings, and numbers, can never
+     * Note that some common Python types, including strings and numbers, can never
      * be converted by an lvalue converter, because they are intrinsically immutable.
      * C++ functions that use output arguments for these types must be converted to
      * return multiple values instead.
