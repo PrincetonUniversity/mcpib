@@ -20,4 +20,5 @@ init_mcpib(void) {
     mcpib::internal::declareWrapperErrors(module);
     mcpib::internal::declareCallableType(module);
     mcpib::internal::declareTypeRegistryType(module);
+    mcpib::internal::declareClassTypes(module);
 }

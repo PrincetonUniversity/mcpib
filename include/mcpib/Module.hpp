@@ -16,6 +16,7 @@
 namespace mcpib {
 
 class Callable;
+class ClassBase;
 
 class Module {
 public:
@@ -38,6 +39,8 @@ public:
 
     Module & add(Callable const & callable);
 
+    Module & add(ClassBase & cls);
+
     Module & add(std::string const & name, PyPtr const & value);
 
     TypeRegistry & getRegistry() { return _registry; }
@@ -56,6 +59,7 @@ public:
 private:
 
     friend class Callable;
+    friend class ClassBase;
 
     PyPtr _py;
     TypeRegistry _registry;

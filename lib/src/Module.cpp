@@ -10,6 +10,7 @@
 #include "mcpib/Module.hpp"
 #include "mcpib/WrapperError.hpp"
 #include "mcpib/Callable.hpp"
+#include "mcpib/Class.hpp"
 
 namespace mcpib {
 
@@ -35,6 +36,15 @@ Module::Module(PyPtr const & py) :
 
 Module & Module::add(Callable const & callable) {
     PyModule_AddObject(_py.get(), callable.getName().c_str(), callable._py.incref());
+    return *this;
+}
+
+Module & Module::add(ClassBase & cls) {
+    PyPtr p = cls._ready(*this);
+    if (!p) {
+        throw PythonException::fetch();
+    }
+    PyModule_AddObject(_py.get(), cls._name.c_str(), p.incref());
     return *this;
 }
 

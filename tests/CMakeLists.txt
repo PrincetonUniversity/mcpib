@@ -17,6 +17,7 @@ function(add_dual_test NAME)
 endfunction(add_dual_test)
 
 add_python_test(exceptions_test)
+add_dual_test(class)
 add_dual_test(cpp_utils)
 add_dual_test(builtin_numeric)
 add_dual_test(builtin_strings)

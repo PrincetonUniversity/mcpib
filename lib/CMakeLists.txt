@@ -3,6 +3,7 @@ add_library(mcpib SHARED
   src/internal/format.cc
   src/Callable.cpp
   src/CallableOverload.cpp
+  src/Class.cpp
   src/Module.cpp
   src/PyPtr.cpp
   src/PythonException.cpp
