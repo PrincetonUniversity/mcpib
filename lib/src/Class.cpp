@@ -45,17 +45,12 @@ void PyInstance::destroy(PyObject * self) {
     self->ob_type->tp_free(self);
 }
 
-void destroyPyClass(PyClass * self) {
-    delete self->ctype;
-    delete [] self->base.tp_name;
-}
-
-PyTypeObject metaclass = {
+PyTypeObject metatype = {
     PyVarObject_HEAD_INIT(NULL, 0)
-    const_cast<char*>("mcpib.Class"),    // tp_name
-    sizeof(PyClass),                     // tp_basicsize
+    const_cast<char*>("mcpib.Type"),     // tp_name
+    0, // set in declareClassTypes       // tp_basicsize
     0,                                   // tp_itemsize
-    (destructor)&destroyPyClass,         // tp_dealloc
+    0,                                   // tp_dealloc
     0,                                   // tp_print
     0,                                   // tp_getattr
     0,                                   // tp_setattr
@@ -71,7 +66,7 @@ PyTypeObject metaclass = {
     0,                                   // tp_setattro
     0,                                   // tp_as_buffer
     Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE,   // tp_flags
-    "Python metaclass for mcpib-wrapped C++ classes",   // tp_doc
+    "Python metatype for mcpib-wrapped C++ classes",   // tp_doc
     0,                                   // tp_traverse
     0,                                   // tp_clear
     0,                                   // tp_richcompare
@@ -81,7 +76,55 @@ PyTypeObject metaclass = {
     0,                                   // tp_methods
     0,                                   // tp_members
     0,                                   // tp_getset
-    0, // &PyType_Type                   // tp_base
+    0, // set in declareClassWrappers    // tp_base
+    0,                                   // tp_dict
+    0,                                   // tp_descr_get
+    0,                                   // tp_descr_set
+    0,                                   // tp_dictoffset
+    0,                                   // tp_init
+    0,                                   // tp_alloc
+    0,                                   // tp_new
+    0,                                   // tp_free
+    0, // set in declareClassWrappers    // tp_is_gc
+    0,                                   // tp_bases
+    0,                                   // tp_mro
+    0,                                   // tp_subclasses
+    0,                                   // tp_cache
+    0,                                   // tp_weaklist
+};
+
+PyTypeObject PyInstance::type = {
+    PyVarObject_HEAD_INIT(NULL, 0)
+    const_cast<char*>("mcpib.Object"),    // tp_name
+    sizeof(PyInstance),                  // tp_basicsize
+    0,                                   // tp_itemsize
+    (destructor)PyInstance::destroy,     // tp_dealloc
+    0,                                   // tp_print
+    0,                                   // tp_getattr
+    0,                                   // tp_setattr
+    0,                                   // tp_compare
+    0,                                   // tp_repr
+    0,                                   // tp_as_number
+    0,                                   // tp_as_sequence
+    0,                                   // tp_as_mapping
+    0,                                   // tp_hash
+    0,                                   // tp_call
+    0,                                   // tp_str
+    0,                                   // tp_getattro
+    0,                                   // tp_setattro
+    0,                                   // tp_as_buffer
+    Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE,   // tp_flags
+    "Base class for mcpib-wrapped C++ classes",   // tp_doc
+    0,                                   // tp_traverse
+    0,                                   // tp_clear
+    0,                                   // tp_richcompare
+    0,                                   // tp_weaklistoffset
+    0,                                   // tp_iter
+    0,                                   // tp_iternext
+    0,                                   // tp_methods
+    0,                                   // tp_members
+    0,                                   // tp_getset
+    0,                                   // tp_base
     0,                                   // tp_dict
     0,                                   // tp_descr_get
     0,                                   // tp_descr_set
@@ -98,10 +141,11 @@ PyTypeObject metaclass = {
     0,                                   // tp_weaklist
 };
 
+
 class InstanceFromPythonConverter : public FromPythonConverter {
 public:
 
-    InstanceFromPythonConverter(PyPtr const & p, Penalty penalty) : FromPythonConverter(penalty), _p(p) {}
+    explicit InstanceFromPythonConverter(PyPtr const & p) : FromPythonConverter(0), _p(p) {}
 
     virtual void * convert() {
         return reinterpret_cast<PyInstance*>(_p.get())->holder->get();
@@ -114,27 +158,14 @@ private:
 class InstanceFromPythonFactory: public FromPythonFactory {
 public:
 
-    explicit InstanceFromPythonFactory(PyClass * cls, std::string const & name) :
+    explicit InstanceFromPythonFactory(PyPtr const & cls, std::string const & name) :
         FromPythonFactory(name, true, false),
         _cls(cls)
     {}
 
     virtual std::unique_ptr<FromPythonConverter> apply(PyPtr const & p) const {
-        if (Py_TYPE(p.get()) == &_cls->base)  {
-            return std::unique_ptr<FromPythonConverter>(new InstanceFromPythonConverter(p, 0));
-        }
-        if (Py_TYPE(Py_TYPE(p.get())) != &metaclass) {
-            return nullptr;
-        }
-        // Following the implementation of PyType_IsSubtype, we use the MRO to check all base classes
-        // without recursion.
-        PyObject * mro = Py_TYPE(p.get())->tp_mro;
-        assert(PyTuple_Check(mro));
-        Py_ssize_t size = PyTuple_GET_SIZE(mro);
-        for (Py_ssize_t i = 0; i < size; i++) {
-            if (PyTuple_GET_ITEM(mro, i) == reinterpret_cast<PyObject*>(_cls)) {
-                return std::unique_ptr<FromPythonConverter>(new InstanceFromPythonConverter(p, i));
-            }
+        if (Py_TYPE(p.get()) == reinterpret_cast<PyTypeObject*>(_cls.get()))  {
+            return std::unique_ptr<FromPythonConverter>(new InstanceFromPythonConverter(p));
         }
         return nullptr;
     }
@@ -144,93 +175,66 @@ public:
     }
 
 private:
-    PyClass * _cls;
+    PyPtr _cls;
 };
 
 } // anonymous;
 
-PyClass PyClass::make(TypeInfo const & ctype) {
-    PyClass result = {
-        {
-            PyVarObject_HEAD_INIT(NULL, 0)
-            0,                                   // tp_name
-            sizeof(PyInstance),                  // tp_basicsize
-            0,                                   // tp_itemsize
-            (destructor)&PyInstance::destroy,    // tp_dealloc
-            0,                                   // tp_print
-            0,                                   // tp_getattr
-            0,                                   // tp_setattr
-            0,                                   // tp_compare
-            0,                                   // tp_repr
-            0,                                   // tp_as_number
-            0,                                   // tp_as_sequence
-            0,                                   // tp_as_mapping
-            0,                                   // tp_hash
-            0,                                   // tp_call
-            0,                                   // tp_str
-            0,                                   // tp_getattro
-            0,                                   // tp_setattro
-            0,                                   // tp_as_buffer
-            Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE,   // tp_flags
-            "Python base class for mcpib-wrapped C++ classes",   // tp_doc
-            0,                                   // tp_traverse
-            0,                                   // tp_clear
-            0,                                   // tp_richcompare
-            0,                                   // tp_weaklistoffset
-            0,                                   // tp_iter
-            0,                                   // tp_iternext
-            0,                                   // tp_methods
-            0,                                   // tp_members
-            0,                                   // tp_getset
-            0, // PyBaseObject_Type              // tp_base
-            0,                                   // tp_dict
-            0,                                   // tp_descr_get
-            0,                                   // tp_descr_set
-            0,                                   // tp_dictoffset
-            0,                                   // tp_init
-            0,                                   // tp_alloc
-            0,                                   // tp_new
-            0,                                   // tp_free
-        }
-    };
-    result.base.ob_type = &metaclass;
-    result.ctype = new TypeInfo(ctype);
-    return result;
+ClassBase::ClassBase(std::string const & name) {
+    PyPtr py_name = PyPtr::steal(PyString_FromString(name.c_str()));
+    PyPtr py_bases = PyPtr::steal(PyTuple_New(1));
+    Py_INCREF(&PyInstance::type);
+    PyTuple_SET_ITEM(py_bases.get(), 0, reinterpret_cast<PyObject*>(&PyInstance::type));
+    PyPtr py_dict = PyPtr::steal(PyDict_New());
+    _py = PyPtr::steal(
+        PyObject_CallFunctionObjArgs(
+            reinterpret_cast<PyObject*>(&metatype),
+            py_name.get(), py_bases.get(), py_dict.get(), nullptr
+        )
+    );
 }
 
-PyPtr PyClass::makeInstance(std::unique_ptr<Holder> holder) {
-    PyPtr result = PyPtr::steal(base.tp_alloc(&base, 0));
+PyPtr ClassBase::makeInstance(std::unique_ptr<Holder> holder) const {
+    PyTypeObject * type = _getPyTypeObject();
+    PyPtr result = PyPtr::steal(type->tp_alloc(type, 0));
     PyInstance * instance = reinterpret_cast<PyInstance*>(result.get());
     instance->holder = holder.release();
     return result;
 }
 
-PyPtr ClassBase::_ready(Module & module) {
+void ClassBase::_attachTo(Module & module, TypeInfo const & ctype) {
+    // Set the __module__ attribute.
     char const * module_name = PyModule_GetName(module._py.get());
-    if (!module_name) {
-        return nullptr;
-    }
-    std::string full = fmt::format("{}.{}", module_name, _name);
-    char * buf = new char[full.size() + 1];
-    std::strncpy(buf, full.data(), full.size());
-    delete [] _py->base.tp_name;
-    _py->base.tp_name = buf;
-    if (PyType_Ready(reinterpret_cast<PyTypeObject*>(_py)) < 0) {
-        return nullptr;
-    }
-    std::unique_ptr<FromPythonFactory> fromPython(new InstanceFromPythonFactory(_py, full));
-    module.getRegistry().require(*_py->ctype)->registerFromPython(std::move(fromPython));
-    return PyPtr::borrow(reinterpret_cast<PyObject*>(_py));
+    PyPtr py_module_name = PyPtr::steal(PyString_FromString(module_name));
+    PyObject_SetAttrString(_py.get(), "__module__", py_module_name.get());
+
+    // Actually add the class object to the module.
+    PyModule_AddObject(module._py.get(), _getPyTypeObject()->tp_name, _py.incref());
+
+    // Register from-Python converters for the new class.
+    std::string full_name = fmt::format("{}.{}", module_name, _getPyTypeObject()->tp_name);
+    std::unique_ptr<FromPythonFactory> fromPython(new InstanceFromPythonFactory(_py, full_name));
+    module.getRegistry().require(ctype)->registerFromPython(std::move(fromPython));
 }
 
 namespace internal {
 
 void declareClassTypes(PyPtr const & module) {
-    Py_TYPE(&metaclass) = &PyType_Type;
-    metaclass.tp_base = &PyType_Type;
-    if (PyType_Ready(&metaclass) != 0) return;
-    auto r = PyPtr::borrow(reinterpret_cast<PyObject*>(&metaclass));
-    PyModule_AddObject(module.get(), "Class", r.release());
+    {
+        Py_TYPE(&metatype) = &PyType_Type;
+        metatype.tp_base = &PyType_Type;
+        metatype.tp_basicsize = PyType_Type.tp_basicsize;
+        metatype.tp_is_gc = PyType_Type.tp_is_gc;
+        if (PyType_Ready(&metatype) != 0) return;
+        auto r = PyPtr::borrow(reinterpret_cast<PyObject*>(&metatype));
+        PyModule_AddObject(module.get(), "Type", r.release());
+    }
+    {
+        Py_TYPE(&PyInstance::type) = &metatype;
+        if (PyType_Ready(&PyInstance::type) != 0) return;
+        auto r = PyPtr::borrow(reinterpret_cast<PyObject*>(&PyInstance::type));
+        PyModule_AddObject(module.get(), "Object", r.release());
+    }
 }
 
 } // namespace internal

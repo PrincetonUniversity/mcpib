@@ -10,13 +10,13 @@
 #define MCPIB_Module_hpp_INCLUDED
 
 #include "mcpib/TypeRegistry.hpp"
+#include "mcpib/Class.hpp"
 
 #include <memory>
 
 namespace mcpib {
 
 class Callable;
-class ClassBase;
 
 class Module {
 public:
@@ -39,9 +39,13 @@ public:
 
     Module & add(Callable const & callable);
 
-    Module & add(ClassBase & cls);
-
     Module & add(std::string const & name, PyPtr const & value);
+
+    template <typename T>
+    Module & add(Class<T> & cls) {
+        cls._attachTo(*this, makeTypeInfo<T>());
+        return *this;
+    }
 
     TypeRegistry & getRegistry() { return _registry; }
 

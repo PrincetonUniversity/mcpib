@@ -39,15 +39,6 @@ Module & Module::add(Callable const & callable) {
     return *this;
 }
 
-Module & Module::add(ClassBase & cls) {
-    PyPtr p = cls._ready(*this);
-    if (!p) {
-        throw PythonException::fetch();
-    }
-    PyModule_AddObject(_py.get(), cls._name.c_str(), p.incref());
-    return *this;
-}
-
 Module & Module::add(std::string const & name, PyPtr const & value) {
     PyModule_AddObject(_py.get(), name.c_str(), value.incref());
     return *this;

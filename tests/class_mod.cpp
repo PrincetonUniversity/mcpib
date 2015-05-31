@@ -24,7 +24,7 @@ initclass_mod(void) {
     module.import("mcpib.strings");
     Class<A> classA("A");
     module.add(classA);
-    module.add("a1", Class<A>::makeValueInstance());
+    module.add("a1", classA.makeValueInstance());
     module.add(
         Callable("accept_val")
             .addOverload([](A a) { return "A"; }, {"a"}, module.getRegistry())

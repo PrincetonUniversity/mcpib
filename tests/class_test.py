@@ -27,13 +27,16 @@ class ClassTestCase(unittest.TestCase):
 
     def testClassRelationships(self):
         """Test for the correct class and metaclass relationships for a wrapped type."""
-        self.assertIsInstance(mcpib.Class, type)
-        self.assertIsSubclass(mcpib.Class, type)
-        self.assertIsInstance(mod.A, mcpib.Class)
+        self.assertIsInstance(mcpib.Type, type)
+        self.assertIsSubclass(mcpib.Type, type)
+        self.assertIsInstance(mcpib.Object, mcpib.Type)
+        self.assertIsInstance(mcpib.Object, type)
+        self.assertIsInstance(mod.A, mcpib.Type)
         self.assertIsInstance(mod.A, type)
         self.assertNotIsSubclass(mod.A, type)
-        self.assertNotIsSubclass(mod.A, mcpib.Class)
+        self.assertNotIsSubclass(mod.A, mcpib.Type)
         self.assertIsInstance(mod.a1, mod.A)
+        self.assertIsInstance(mod.a1, mcpib.Object)
 
     def testFromPython(self):
         """Test from-Python converteres for wrapped classes."""
