@@ -37,6 +37,14 @@ class ClassTestCase(unittest.TestCase):
         self.assertNotIsSubclass(mod.A, mcpib.Type)
         self.assertIsInstance(mod.a1, mod.A)
         self.assertIsInstance(mod.a1, mcpib.Object)
+        self.assertIsInstance(mod.B, mcpib.Type)
+        self.assertIsInstance(mod.B, type)
+        self.assertIsSubclass(mod.B, mod.A)
+        self.assertNotIsSubclass(mod.B, type)
+        self.assertNotIsSubclass(mod.B, mcpib.Type)
+        self.assertIsInstance(mod.b1, mod.B)
+        self.assertIsInstance(mod.b1, mod.A)
+        self.assertIsInstance(mod.b1, mcpib.Object)
 
     def testFromPython(self):
         """Test from-Python converteres for wrapped classes."""
@@ -45,6 +53,11 @@ class ClassTestCase(unittest.TestCase):
         self.assertEqual(mod.accept_cref(a=mod.a1), "A")
         self.assertEqual(mod.accept_ptr(a=mod.a1), "A")
         self.assertEqual(mod.accept_cptr(a=mod.a1), "A")
+        self.assertEqual(mod.accept_val(b=mod.b1), "B")
+        self.assertEqual(mod.accept_ref(b=mod.b1), "B")
+        self.assertEqual(mod.accept_cref(b=mod.b1), "B")
+        self.assertEqual(mod.accept_ptr(b=mod.b1), "B")
+        self.assertEqual(mod.accept_cptr(b=mod.b1), "B")
 
 if __name__ == "__main__":
     unittest.main()

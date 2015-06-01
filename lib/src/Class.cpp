@@ -151,11 +151,20 @@ HolderBase * getHolder(PyPtr const & p) {
 
 } // namespace detail
 
-ClassBase::ClassBase(std::string const & name) {
+ClassBase::ClassBase(std::string const & name, std::initializer_list<PyPtr> bases) {
     PyPtr py_name = PyPtr::steal(PyString_FromString(name.c_str()));
-    PyPtr py_bases = PyPtr::steal(PyTuple_New(1));
-    Py_INCREF(&PyInstance::type);
-    PyTuple_SET_ITEM(py_bases.get(), 0, reinterpret_cast<PyObject*>(&PyInstance::type));
+    PyPtr py_bases;
+    if (!bases.size()) {
+        py_bases = PyPtr::steal(PyTuple_New(1));
+        Py_INCREF(&PyInstance::type);
+        PyTuple_SET_ITEM(py_bases.get(), 0, reinterpret_cast<PyObject*>(&PyInstance::type));
+    } else {
+        py_bases = PyPtr::steal(PyTuple_New(bases.size()));
+        Py_ssize_t n = 0;
+        for (auto iter = bases.begin(); iter != bases.end(); ++iter, ++n) {
+            PyTuple_SET_ITEM(py_bases.get(), n, iter->incref());
+        }
+    }
     PyPtr py_dict = PyPtr::steal(PyDict_New());
     _py = PyPtr::steal(
         PyObject_CallFunctionObjArgs(

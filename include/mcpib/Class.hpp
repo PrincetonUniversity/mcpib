@@ -28,6 +28,7 @@ public:
     ClassBase & operator=(ClassBase const &) = delete;
     ClassBase & operator=(ClassBase &&) = delete;
 
+    PyPtr getPyObject() const { return _py; }
 
     virtual ~ClassBase() {}
 
@@ -35,7 +36,7 @@ protected:
 
     friend class Module;
 
-    explicit ClassBase(std::string const & name);
+    explicit ClassBase(std::string const & name, std::initializer_list<PyPtr> bases);
 
     PyPtr makeInstance(std::unique_ptr<HolderBase> holder) const;
 
@@ -53,7 +54,13 @@ template <typename T>
 class Class : public ClassBase {
 public:
 
-    explicit Class(std::string const & name) : ClassBase(name) {}
+    explicit Class(std::string const & name) : ClassBase(name, {}) {}
+
+    explicit Class(std::string const & name, ClassBase const & base) :
+        ClassBase(name, {base.getPyObject()}) {}
+
+    explicit Class(std::string const & name, std::initializer_list<PyPtr> bases) :
+        ClassBase(name, bases) {}
 
     template <typename ...Args>
     PyPtr makeValueInstance(Args && ...args) const {
