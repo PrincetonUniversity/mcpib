@@ -34,7 +34,7 @@ struct PyInstance {
     PyInstance & operator=(PyInstance &&) = delete;
 
     PyObject base;
-    Holder * holder;
+    HolderBase * holder;
 };
 
 static_assert(std::is_standard_layout<PyInstance>::value, "PyInstance is not standard layout.");
@@ -141,44 +141,15 @@ PyTypeObject PyInstance::type = {
     0,                                   // tp_weaklist
 };
 
-
-class InstanceFromPythonConverter : public FromPythonConverter {
-public:
-
-    explicit InstanceFromPythonConverter(PyPtr const & p) : FromPythonConverter(0), _p(p) {}
-
-    virtual void * convert() {
-        return reinterpret_cast<PyInstance*>(_p.get())->holder->get();
-    }
-
-private:
-    PyPtr _p;
-};
-
-class InstanceFromPythonFactory: public FromPythonFactory {
-public:
-
-    explicit InstanceFromPythonFactory(PyPtr const & cls, std::string const & name) :
-        FromPythonFactory(name, true, false),
-        _cls(cls)
-    {}
-
-    virtual std::unique_ptr<FromPythonConverter> apply(PyPtr const & p) const {
-        if (Py_TYPE(p.get()) == reinterpret_cast<PyTypeObject*>(_cls.get()))  {
-            return std::unique_ptr<FromPythonConverter>(new InstanceFromPythonConverter(p));
-        }
-        return nullptr;
-    }
-
-    virtual std::unique_ptr<FromPythonFactory> clone(TypeRegistry & registry) const {
-        return std::unique_ptr<FromPythonFactory>(new InstanceFromPythonFactory(_cls, name));
-    }
-
-private:
-    PyPtr _cls;
-};
-
 } // anonymous;
+
+namespace detail {
+
+HolderBase * getHolder(PyPtr const & p) {
+    return reinterpret_cast<PyInstance*>(p.get())->holder;
+}
+
+} // namespace detail
 
 ClassBase::ClassBase(std::string const & name) {
     PyPtr py_name = PyPtr::steal(PyString_FromString(name.c_str()));
@@ -194,7 +165,7 @@ ClassBase::ClassBase(std::string const & name) {
     );
 }
 
-PyPtr ClassBase::makeInstance(std::unique_ptr<Holder> holder) const {
+PyPtr ClassBase::makeInstance(std::unique_ptr<HolderBase> holder) const {
     PyTypeObject * type = _getPyTypeObject();
     PyPtr result = PyPtr::steal(type->tp_alloc(type, 0));
     PyInstance * instance = reinterpret_cast<PyInstance*>(result.get());
@@ -213,8 +184,7 @@ void ClassBase::_attachTo(Module & module, TypeInfo const & ctype) {
 
     // Register from-Python converters for the new class.
     std::string full_name = fmt::format("{}.{}", module_name, _getPyTypeObject()->tp_name);
-    std::unique_ptr<FromPythonFactory> fromPython(new InstanceFromPythonFactory(_py, full_name));
-    module.getRegistry().require(ctype)->registerFromPython(std::move(fromPython));
+    _registerConverters(full_name, *module.getRegistry().require(ctype));
 }
 
 namespace internal {

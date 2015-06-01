@@ -14,17 +14,22 @@
 
 namespace mcpib {
 
-class Holder {
+
+class HolderBase {
 public:
-
-    virtual void * get() = 0;
-
-    virtual ~Holder() {}
+    virtual ~HolderBase() {}
 };
 
 
 template <typename T>
-class ValueHolder : public Holder {
+class Holder : public HolderBase {
+public:
+    virtual T * get() = 0;
+};
+
+
+template <typename T>
+class ValueHolder : public Holder<T> {
 public:
 
     ValueHolder(ValueHolder const &) = delete;
@@ -36,7 +41,7 @@ public:
     template <typename ...Args>
     explicit ValueHolder(Args && ... args) : _value(std::forward<Args>(args)...) {}
 
-    virtual void * get() { return &_value; }
+    virtual T * get() { return &_value; }
 
 private:
     T _value;
@@ -44,7 +49,7 @@ private:
 
 
 template <typename T>
-class UniqueHolder : public Holder {
+class UniqueHolder : public Holder<T> {
 public:
 
     UniqueHolder(UniqueHolder const &) = delete;
@@ -59,7 +64,7 @@ public:
     explicit UniqueHolder(Args && ... args) :
         _ptr(new UniqueHolder(std::forward<Args>(args)...)) {}
 
-    virtual void * get() { return _ptr.get(); }
+    virtual T * get() { return _ptr.get(); }
 
 private:
     std::unique_ptr<T> _ptr;
@@ -67,7 +72,7 @@ private:
 
 
 template <typename T>
-class SharedHolder : public Holder {
+class SharedHolder : public Holder<T> {
 public:
 
     SharedHolder(SharedHolder const &) = delete;
@@ -82,7 +87,7 @@ public:
     explicit SharedHolder(Args && ... args) :
         _ptr(std::make_shared<T>(std::forward<Args>(args)...)) {}
 
-    virtual void * get() { return _ptr.get(); }
+    virtual T * get() { return _ptr.get(); }
 
 private:
     std::shared_ptr<T> _ptr;
